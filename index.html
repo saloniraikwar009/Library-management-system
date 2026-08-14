@@ -1,0 +1,1698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Utkranti Library Ganj Basoda — Library Manager</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,500;0,600;0,700;1,500&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<!-- FontAwesome & Bootstrap Icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root{
+  --ink:#0f172a;
+  --ink-2:#1e293b;
+  --paper:#f8fafc;
+  --card:#ffffff;
+  --border:#e2e8f0;
+  --muted:#64748b;
+  --gold:#f59e0b;
+  --gold-soft:#fef3c7;
+  --green:#10b981;
+  --green-soft:#d1fae5;
+  --red:#ef4444;
+  --red-soft:#fee2e2;
+  --blue:#3b82f6;
+  --blue-soft:#dbeafe;
+  --purple:#8b5cf6;
+  --purple-soft:#ede9fe;
+  --radius:12px;
+  --shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 10px 25px -3px rgba(0,0,0,0.1);
+  --shadow-hover: 0 10px 15px -3px rgba(0,0,0,0.1), 0 20px 30px -5px rgba(0,0,0,0.15);
+}
+*{box-sizing:border-box;}
+html,body{height:100%;}
+body{
+  margin:0;
+  font-family:'Inter',system-ui,sans-serif;
+  background:var(--paper);
+  color:var(--ink);
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4{font-family:'Lora',serif; margin:0; letter-spacing:-.01em;}
+.mono{font-family:'JetBrains Mono',monospace;}
+button{font-family:inherit; cursor:pointer;}
+input,select,textarea{font-family:inherit;}
+::selection{background:var(--gold-soft);}
+
+/* ---------- Login ---------- */
+#loginScreen{
+  position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
+  background:
+    radial-gradient(circle at 20% 15%, rgba(184,134,59,.14), transparent 40%),
+    radial-gradient(circle at 85% 85%, rgba(47,90,168,.14), transparent 45%),
+    var(--ink);
+  z-index:500;
+}
+.login-card{
+  width:380px; max-width:92vw; background:var(--card); border-radius:14px; padding:36px 32px 30px;
+  box-shadow:0 30px 60px rgba(0,0,0,.35); position:relative; overflow:hidden;
+}
+.login-card::before{
+  content:""; position:absolute; top:0; left:0; right:0; height:6px;
+  background:linear-gradient(90deg,var(--purple),var(--blue));
+}
+.brand{display:flex; align-items:center; gap:12px; margin-bottom:22px;}
+.brand-mark{
+  width:42px; height:42px; border-radius:9px; background:var(--ink);
+  display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  position:relative;
+}
+.brand-mark svg{width:22px;height:22px;}
+.brand-name{font-family:'Lora',serif; font-weight:700; font-size:19px; line-height:1.15;}
+.brand-sub{font-size:11.5px; color:var(--muted); letter-spacing:.04em; text-transform:uppercase; margin-top:2px;}
+.field{margin-bottom:14px;}
+.field label{display:block; font-size:12.5px; font-weight:600; color:var(--muted); margin-bottom:6px; letter-spacing:.02em;}
+.field input, .field select, .field textarea{
+  width:100%; padding:10px 12px; border:1.5px solid var(--border); border-radius:8px; font-size:14px; background:#fff; color:var(--ink);
+  transition:border-color .15s;
+}
+.field input:focus, .field select:focus, .field textarea:focus{outline:none; border-color:var(--gold);}
+.btn{
+  border:none; border-radius:8px; padding:10px 16px; font-size:13.5px; font-weight:600; letter-spacing:.01em;
+  display:inline-flex; align-items:center; gap:7px; transition:transform .08s, box-shadow .15s, background .15s;
+}
+.btn:active{transform:translateY(1px);}
+.btn-primary{background:var(--ink); color:#fff;}
+.btn-primary:hover{background:var(--ink-2);}
+.btn-gold{background:var(--gold); color:#fff;}
+.btn-gold:hover{background:#a3782f;}
+.btn-block{width:100%; justify-content:center;}
+.btn-ghost{background:transparent; color:var(--ink); border:1.5px solid var(--border);}
+.btn-ghost:hover{border-color:var(--ink);}
+.btn-danger{background:var(--red-soft); color:var(--red);}
+.btn-danger:hover{background:#f3d3d0;}
+.btn-sm{padding:6px 11px; font-size:12.5px; border-radius:7px;}
+.login-hint{font-size:11.5px; color:var(--muted); text-align:center; margin-top:16px; line-height:1.5;}
+.login-error{background:var(--red-soft); color:var(--red); font-size:12.5px; padding:8px 10px; border-radius:7px; margin-bottom:12px; display:none;}
+
+/* ---------- App shell ---------- */
+#appShell{display:none; min-height:100vh;}
+#appShell.active{display:flex;}
+.sidebar{
+  width:230px; flex-shrink:0; background:var(--ink); color:#cfd6e6; display:flex; flex-direction:column;
+  position:sticky; top:0; height:100vh;
+}
+.side-brand{padding:22px 20px 18px; display:flex; align-items:center; gap:11px; border-bottom:1px solid rgba(255,255,255,.08);}
+.side-brand .brand-mark{background:var(--gold);}
+.side-brand .brand-name{color:#fff; font-size:16.5px;}
+.side-brand .brand-sub{color:#93a0bd;}
+.nav{flex:1; padding:14px 10px; overflow-y:auto;}
+.nav-item{
+  display:flex; align-items:center; gap:11px; padding:10px 12px; border-radius:8px; margin-bottom:2px;
+  font-size:13.5px; font-weight:500; color:#b9c2d8; cursor:pointer; transition:background .12s,color .12s;
+  border-left:3px solid transparent;
+}
+.nav-item svg{width:17px; height:17px; flex-shrink:0; opacity:.85;}
+.nav-item:hover{background:rgba(255,255,255,.06); color:#fff;}
+.nav-item.active{background:rgba(184,134,59,.18); color:#fff; border-left-color:var(--gold);}
+.nav-section-label{font-size:10.5px; text-transform:uppercase; letter-spacing:.08em; color:#6d7996; padding:14px 12px 6px;}
+.side-foot{padding:14px 16px; border-top:1px solid rgba(255,255,255,.08); font-size:12px; color:#8b96b3;}
+.side-user{display:flex; align-items:center; gap:9px; margin-bottom:10px;}
+.side-user-av{width:30px;height:30px;border-radius:50%;background:var(--gold);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12.5px; flex-shrink:0;}
+.side-user-name{color:#fff; font-size:13px; font-weight:600; line-height:1.2;}
+.side-user-role{font-size:11px; color:#93a0bd;}
+
+.main{flex:1; min-width:0; display:flex; flex-direction:column;}
+.topbar{
+  height:62px; background:var(--card); border-bottom:1px solid var(--border); display:flex; align-items:center;
+  justify-content:space-between; padding:0 24px; position:sticky; top:0; z-index:20;
+}
+.topbar h2{font-size:19px;}
+.topbar-actions{display:flex; align-items:center; gap:10px;}
+.search-box{position:relative;}
+.search-box input{
+  width:230px; padding:8px 12px 8px 32px; border:1.5px solid var(--border); border-radius:8px; font-size:13px; background:var(--paper);
+}
+.search-box svg, .search-box i{position:absolute; left:9px; top:9px; width:14px; height:14px; color:var(--muted); font-size:14px; display:flex; align-items:center; justify-content:center;}
+
+.view{padding:24px; flex:1;}
+.view-header{display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; flex-wrap:wrap; gap:10px;}
+.view-header .subtitle{color:var(--muted); font-size:13px; margin-top:3px;}
+
+/* ---------- Cards / grid ---------- */
+.grid-stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:14px; margin-bottom:22px;}
+.stat-card{
+  background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:20px; position:relative; box-shadow:var(--shadow); transition:transform 0.2s ease, box-shadow 0.2s ease;
+}
+.stat-card:hover{
+  transform:translateY(-3px); box-shadow:var(--shadow-hover);
+}
+.stat-card::before{
+  content:""; position:absolute; top:12px; left:12px; width:8px; height:8px; border-radius:50%; background:var(--paper); border:1.5px solid var(--border);
+}
+.stat-label{font-size:11.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); font-weight:600; margin-left:16px;}
+.stat-value{font-family:'Lora',serif; font-size:26px; font-weight:700; margin-top:6px;}
+.stat-sub{font-size:11.5px; color:var(--muted); margin-top:4px;}
+.stat-card.warn .stat-value{color:var(--red);}
+.stat-card.good .stat-value{color:var(--green);}
+.stat-card.gold .stat-value{color:var(--gold);}
+
+.panel{background:var(--card); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden; margin-bottom:24px; transition:box-shadow 0.2s ease;}
+.panel:hover{box-shadow:var(--shadow-hover);}
+.panel-head{padding:16px 20px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; background:linear-gradient(to right, #ffffff, #f8fafc);}
+.panel-head h3{font-size:16px; font-weight:600; color:var(--ink);}
+.panel-body{padding:20px;}
+
+/* ---------- Table ---------- */
+table{width:100%; border-collapse:collapse; font-size:13px;}
+thead th{
+  text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted);
+  padding:9px 12px; border-bottom:1.5px solid var(--border); font-weight:700; white-space:nowrap;
+}
+tbody td{padding:10px 12px; border-bottom:1px solid var(--border); vertical-align:middle;}
+tbody tr:hover{background:#FAFBFD;}
+tbody tr:last-child td{border-bottom:none;}
+.cell-name{font-weight:600;}
+.cell-sub{color:var(--muted); font-size:11.5px;}
+.table-wrap{overflow-x:auto;}
+
+.badge{display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:20px; font-size:11px; font-weight:700; letter-spacing:.02em;}
+.badge-green{background:var(--green-soft); color:var(--green);}
+.badge-red{background:var(--red-soft); color:var(--red);}
+.badge-gold{background:var(--gold-soft); color:#8a641f;}
+.badge-blue{background:var(--blue-soft); color:var(--blue);}
+.badge-grey{background:#EDEFF3; color:var(--muted);}
+
+.avatar{width:34px; height:34px; border-radius:50%; object-fit:cover; background:var(--blue-soft); flex-shrink:0;}
+.avatar-fallback{width:34px; height:34px; border-radius:50%; background:var(--ink); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:12px; flex-shrink:0;}
+.row-flex{display:flex; align-items:center; gap:10px;}
+
+.icon-btn{background:transparent; border:1.5px solid var(--border); border-radius:7px; width:30px; height:30px; display:inline-flex; align-items:center; justify-content:center; color:var(--muted); transition:all .12s;}
+.icon-btn:hover{border-color:var(--ink); color:var(--ink);}
+.icon-btn svg, .icon-btn i{width:14px; height:14px; font-size:14px;}
+.actions-cell{display:flex; gap:6px;}
+
+.toolbar{display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:14px;}
+.toolbar select, .toolbar input{padding:8px 10px; border:1.5px solid var(--border); border-radius:7px; font-size:12.5px; background:#fff;}
+.toolbar .grow{flex:1; min-width:160px;}
+
+.empty-state{text-align:center; padding:50px 20px; color:var(--muted);}
+.empty-state svg, .empty-state i{width:44px;height:44px; font-size:44px; margin-bottom:12px; opacity:.5; display:inline-block;}
+.empty-state h4{font-size:15px; color:var(--ink); margin-bottom:5px;}
+.empty-state p{font-size:13px; margin:0 0 14px;}
+
+/* ---------- Seats grid ---------- */
+.seat-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(88px,1fr)); gap:10px;}
+.seat{
+  border-radius:9px; padding:10px 8px; text-align:center; cursor:pointer; border:1.5px solid var(--border); background:#fff;
+  transition:transform .1s, box-shadow .15s;
+}
+.seat:hover{transform:translateY(-2px); box-shadow:var(--shadow);}
+.seat-num{font-family:'JetBrains Mono',monospace; font-weight:700; font-size:14px;}
+.seat-type{font-size:9.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.03em; margin-top:2px;}
+.seat-name{font-size:10.5px; margin-top:5px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.seat.vacant{background:var(--green-soft); border-color:#c9dfcd;}
+.seat.occupied{background:#fff; border-color:var(--blue); box-shadow:inset 0 0 0 1px var(--blue);}
+.seat.reserved{background:var(--gold-soft); border-color:#e2c692;}
+.legend{display:flex; gap:16px; margin-bottom:16px; flex-wrap:wrap;}
+.legend-item{display:flex; align-items:center; gap:6px; font-size:12px; color:var(--muted);}
+.legend-dot{width:10px; height:10px; border-radius:3px;}
+
+/* ---------- Modal ---------- */
+#modalRoot{position:fixed; inset:0; z-index:400; display:none; align-items:flex-start; justify-content:center; overflow-y:auto; padding:40px 16px;}
+#modalRoot.active{display:flex;}
+.modal-overlay{position:fixed; inset:0; background:rgba(20,33,61,.55); backdrop-filter:blur(1px);}
+.modal{
+  position:relative; background:#fff; width:520px; max-width:100%; border-radius:12px; box-shadow:0 24px 60px rgba(0,0,0,.3);
+  animation:modalIn .16s ease-out;
+}
+.modal.wide{width:720px;}
+@keyframes modalIn{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);}}
+.modal-head{padding:18px 22px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between;}
+.modal-head h3{font-size:16.5px;}
+.modal-close{background:transparent; border:none; color:var(--muted); font-size:20px; line-height:1; padding:4px;}
+.modal-body{padding:20px 22px; max-height:70vh; overflow-y:auto;}
+.modal-foot{padding:16px 22px; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:10px;}
+.form-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px 14px;}
+.form-grid .full{grid-column:1/-1;}
+.field small{color:var(--muted); font-size:11px; display:block; margin-top:4px;}
+.upload-row{display:flex; align-items:center; gap:12px;}
+.upload-preview{width:56px; height:56px; border-radius:8px; object-fit:cover; background:var(--paper); border:1.5px solid var(--border); flex-shrink:0;}
+
+/* ---------- Toast ---------- */
+#toastRoot{position:fixed; bottom:20px; right:20px; z-index:600; display:flex; flex-direction:column; gap:8px;}
+.toast{
+  background:var(--ink); color:#fff; padding:11px 16px; border-radius:8px; font-size:13px; box-shadow:0 10px 30px rgba(0,0,0,.25);
+  display:flex; align-items:center; gap:9px; animation:toastIn .18s ease-out; max-width:320px;
+}
+.toast.error{background:var(--red);}
+.toast.success{background:var(--green);}
+@keyframes toastIn{from{opacity:0; transform:translateX(20px);} to{opacity:1; transform:translateX(0);}}
+
+.tabs-row{display:flex; gap:4px; border-bottom:1px solid var(--border); margin-bottom:16px;}
+.tab-btn{padding:9px 14px; font-size:13px; font-weight:600; color:var(--muted); background:transparent; border:none; border-bottom:2.5px solid transparent; margin-bottom:-1px;}
+.tab-btn.active{color:var(--ink); border-color:var(--gold);}
+
+.progress-track{height:6px; background:var(--paper); border-radius:4px; overflow:hidden; margin-top:6px;}
+.progress-fill{height:100%; background:var(--gold); border-radius:4px;}
+
+@media(max-width:880px){
+  .sidebar{width:70px;}
+  .side-brand .brand-name, .side-brand .brand-sub, .nav-item span, .nav-section-label, .side-user-name, .side-user-role, .side-foot small{display:none;}
+  .nav-item{justify-content:center;}
+  .form-grid{grid-template-columns:1fr;}
+}
+@media print{
+  .sidebar, .topbar, .toolbar, .actions-cell, #modalRoot, #toastRoot, .no-print{display:none !important;}
+  body{background:#fff;}
+  .view{padding:0;}
+}
+</style>
+</head>
+<body>
+
+<!-- ===================== LOGIN ===================== -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="brand">
+      <div class="brand-mark" style="background:var(--purple-soft);">
+        <i class="bi bi-book-half" style="font-size: 20px; color: var(--purple);"></i>
+      </div>
+      <div>
+        <div class="brand-name" id="loginBrandName">Reading Room</div>
+        <div class="brand-sub">Library Manager</div>
+      </div>
+    </div>
+    <div class="login-error" id="loginError">Invalid username or password.</div>
+    <form id="loginForm">
+      <div class="field">
+        <label>Username</label>
+        <input type="text" id="loginUser" autocomplete="username" required>
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="loginPass" autocomplete="current-password" required>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">Sign in</button>
+    </form>
+    <div class="login-hint">Default login: <b class="mono">admin</b> / <b class="mono">admin123</b><br>Change this after first login from Settings → Users.<br>Data is saved locally as <b class="mono">CSV files</b> in the <b class="mono">data/</b> folder.</div>
+  </div>
+</div>
+
+<!-- ===================== APP SHELL ===================== -->
+<div id="appShell">
+  <div class="sidebar">
+    <div class="side-brand">
+      <div class="brand-mark" style="background:var(--purple);">
+        <i class="bi bi-book-half" style="font-size: 20px; color: #fff;"></i>
+      </div>
+      <div>
+        <div class="brand-name" id="sideBrandName">Reading Room</div>
+        <div class="brand-sub">Library Manager</div>
+      </div>
+    </div>
+    <div class="nav" id="navList"></div>
+    <div class="side-foot">
+      <div class="side-user">
+        <div class="side-user-av" id="sideUserAv">A</div>
+        <div>
+          <div class="side-user-name" id="sideUserName">Administrator</div>
+          <div class="side-user-role" id="sideUserRole">Admin</div>
+        </div>
+      </div>
+      <button class="btn btn-ghost btn-sm btn-block" id="logoutBtn" style="border-color:rgba(255,255,255,.18); color:#cfd6e6;">Log out</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <h2 id="topbarTitle">Dashboard</h2>
+      <div class="topbar-actions">
+        <div class="search-box no-print">
+          <i class="fa-solid fa-magnifying-glass" style="position:absolute; left:12px; top:10px; color:var(--muted); font-size:13px;"></i>
+          <input type="text" id="globalSearch" placeholder="Search members…">
+        </div>
+      </div>
+    </div>
+    <div class="view" id="view"></div>
+  </div>
+</div>
+
+<div id="modalRoot"><div class="modal-overlay" onclick="closeModal()"></div><div class="modal" id="modalBox"></div></div>
+<div id="toastRoot"></div>
+
+<script>
+/* =========================================================================
+   LIBRARY / STUDY-ROOM MANAGEMENT SYSTEM
+   Single-file app. Persists via window.storage (personal, per account).
+   ========================================================================= */
+
+const ICONS = {
+  dashboard:'<i class="fa-solid fa-chart-pie" style="font-size:16px;"></i>',
+  members:'<i class="fa-solid fa-users" style="font-size:16px;"></i>',
+  seats:'<i class="fa-solid fa-chair" style="font-size:16px;"></i>',
+  fees:'<i class="fa-solid fa-wallet" style="font-size:16px;"></i>',
+  expenses:'<i class="fa-solid fa-file-invoice-dollar" style="font-size:16px;"></i>',
+  reports:'<i class="fa-solid fa-chart-line" style="font-size:16px;"></i>',
+  settings:'<i class="fa-solid fa-gear" style="font-size:16px;"></i>',
+  attendance:'<i class="fa-solid fa-user-check" style="font-size:16px;"></i>',
+  plus:'<i class="fa-solid fa-plus"></i>',
+  edit:'<i class="fa-solid fa-pen"></i>',
+  trash:'<i class="fa-solid fa-trash"></i>',
+  cash:'<i class="fa-solid fa-money-bill-wave"></i>',
+  download:'<i class="fa-solid fa-download"></i>',
+  print:'<i class="fa-solid fa-print"></i>',
+  swap:'<i class="fa-solid fa-arrow-right-arrow-left"></i>',
+};
+
+const DEFAULT_PLANS = [
+  {id:'p1', name:'Monthly - General', duration:'monthly', months:1, price:800, admissionFee:100, seatType:'General'},
+  {id:'p2', name:'Quarterly - General', duration:'quarterly', months:3, price:2200, admissionFee:100, seatType:'General'},
+  {id:'p3', name:'Half-Yearly - General', duration:'half-yearly', months:6, price:4200, admissionFee:100, seatType:'General'},
+  {id:'p4', name:'Yearly - General', duration:'yearly', months:12, price:8000, admissionFee:100, seatType:'General'},
+  {id:'p5', name:'Monthly - Cabin', duration:'monthly', months:1, price:1200, admissionFee:150, seatType:'Cabin'},
+  {id:'p6', name:'Monthly - AC Premium', duration:'monthly', months:1, price:1600, admissionFee:200, seatType:'AC Premium'},
+];
+
+const EXPENSE_CATEGORIES = ['Electricity Bill','Rent','Internet/Wi-Fi','Cleaning','Maintenance','Newspaper','Staff Salary','Stationery','Miscellaneous'];
+
+function defaultState(){
+  const seats = [];
+  for(let i=1;i<=20;i++){
+    seats.push({id:'st'+i, number:'S'+String(i).padStart(2,'0'), type: i<=14?'General': (i<=18?'Cabin':'AC Premium'), status:'vacant', memberId:null, reservedNote:''});
+  }
+  return {
+    business:{ name:'Aksharam Reading Room', tagline:'Study Room & Library Management', address:'', phone:'' },
+    auth:{ users:[{id:'u1', username:'admin', password:'admin123', name:'Administrator', role:'Admin'}] },
+    settings:{ seatTypes:['General','Cabin','AC Premium'], receiptCounter:1000, memberCounter:1 },
+    members:[],
+    seats,
+    plans: JSON.parse(JSON.stringify(DEFAULT_PLANS)),
+    feeTransactions:[],
+    expenses:[],
+    attendance:[],
+    auditLog:[]
+  };
+}
+
+let state = null;
+let session = { user:null };
+let activeTab = 'dashboard';
+let saveTimer = null;
+
+/* ---------------- session timeout (1 hour inactivity) ---------------- */
+const SESSION_TIMEOUT_MS = 60 * 60 * 1000; // 1 hour
+const SESSION_WARN_MS    = 5  * 60 * 1000; // warn at 5 min remaining
+let _sessionTimer  = null;
+let _sessionWarn   = null;
+let _sessionBadge  = null;
+
+function resetSessionTimer(){
+  if(!session.user) return;
+  clearTimeout(_sessionTimer);
+  clearTimeout(_sessionWarn);
+  _clearWarnBadge();
+  // Warn 5 min before timeout
+  _sessionWarn = setTimeout(() => {
+    if(!session.user) return;
+    _showWarnBadge();
+  }, SESSION_TIMEOUT_MS - SESSION_WARN_MS);
+  // Auto-logout after full timeout
+  _sessionTimer = setTimeout(() => {
+    if(!session.user) return;
+    logAction('Session timed out','1 hour inactivity');
+    save();
+    _doSessionTimeout();
+  }, SESSION_TIMEOUT_MS);
+}
+function _doSessionTimeout(){
+  clearTimeout(_sessionTimer);
+  clearTimeout(_sessionWarn);
+  _clearWarnBadge();
+  session.user = null;
+  document.getElementById('appShell').classList.remove('active');
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('loginForm').reset();
+  // Show a prominent toast on the login screen
+  setTimeout(() => toast('You were automatically logged out after 1 hour of inactivity.', 'error'), 100);
+}
+function _showWarnBadge(){
+  _clearWarnBadge();
+  _sessionBadge = document.createElement('div');
+  _sessionBadge.id = 'sessionWarnBadge';
+  _sessionBadge.style.cssText = 'background:var(--gold-soft);color:var(--gold);border:1px solid #e2c692;border-radius:7px;padding:7px 10px;font-size:11.5px;font-weight:600;margin-top:8px;text-align:center;';
+  _sessionBadge.textContent = 'Session expires in 5 min — move mouse to stay logged in';
+  const foot = document.querySelector('.side-foot');
+  if(foot) foot.appendChild(_sessionBadge);
+}
+function _clearWarnBadge(){
+  if(_sessionBadge){ _sessionBadge.remove(); _sessionBadge = null; }
+}
+function _bindActivityEvents(){
+  const events = ['mousemove','mousedown','keydown','touchstart','scroll','click'];
+  events.forEach(ev => document.addEventListener(ev, () => { if(session.user) resetSessionTimer(); }, {passive:true}));
+}
+
+/* ---------------- persistence (local server on this laptop) ---------------- */
+let serverOnline = true;
+async function loadState(){
+  try{
+    const r = await fetch('/api/data');
+    if(!r.ok) throw new Error('bad response');
+    const json = await r.json();
+    if(!json || !json.members){ throw new Error('empty'); }
+    state = json;
+    // backfill any new fields for older saved data
+    const d = defaultState();
+    for(const k of Object.keys(d)) if(!(k in state)) state[k] = d[k];
+    if(!state.settings.memberCounter) state.settings.memberCounter = 1;
+    serverOnline = true;
+  }catch(e){
+    if(e.message==='empty' || e.message==='bad response' || e instanceof SyntaxError){
+      state = defaultState();
+      await persistNow();
+    } else {
+      // server not reachable at all — running the HTML file without `node server.js`
+      serverOnline = false;
+      state = defaultState();
+      document.body.insertAdjacentHTML('afterbegin', `<div style="position:fixed;top:0;left:0;right:0;z-index:9999;background:#B23A3A;color:#fff;text-align:center;padding:8px;font:600 13px Inter,sans-serif;">
+        Can't reach the local server. Start it with <code style="background:rgba(255,255,255,.2);padding:1px 6px;border-radius:4px;">python server.py</code> in the project folder, then reload this page. Nothing you enter now will be saved.
+      </div>`);
+    }
+  }
+}
+function save(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(persistNow, 350);
+}
+async function persistNow(){
+  if(!serverOnline) return;
+  try{
+    const r = await fetch('/api/data', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(state) });
+    if(!r.ok) throw new Error('save rejected');
+  }catch(e){ console.error('save failed', e); toast('Could not save to local server — is it still running?','error'); }
+}
+function logAction(action, details){
+  state.auditLog.unshift({ id:uid(), ts:new Date().toISOString(), user: session.user? session.user.username:'system', action, details: details||'' });
+  if(state.auditLog.length>500) state.auditLog.length = 500;
+}
+
+/* ---------------- utils ---------------- */
+function uid(){ return Math.random().toString(36).slice(2,9) + Date.now().toString(36).slice(-4); }
+function todayISO(){ return new Date().toISOString().slice(0,10); }
+function fmtDate(d){ if(!d) return '—'; const dt = new Date(d+'T00:00:00'); return dt.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}); }
+function fmtMoney(n){ n = Number(n||0); return '₹' + n.toLocaleString('en-IN',{maximumFractionDigits:0}); }
+function daysBetween(a,b){ return Math.round((new Date(b) - new Date(a)) / 86400000); }
+function addMonths(dateStr, months){ const d = new Date(dateStr+'T00:00:00'); d.setMonth(d.getMonth()+months); return d.toISOString().slice(0,10); }
+function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function initials(name){ return (name||'?').trim().split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase(); }
+function toast(msg, type){
+  const el = document.createElement('div');
+  el.className = 'toast' + (type? ' '+type : '');
+  el.textContent = msg;
+  document.getElementById('toastRoot').appendChild(el);
+  setTimeout(()=>{ el.style.opacity='0'; el.style.transition='opacity .25s'; setTimeout(()=>el.remove(),250); }, 2600);
+}
+function planById(id){ return state.plans.find(p=>p.id===id); }
+function memberById(id){ return state.members.find(m=>m.id===id); }
+function seatById(id){ return state.seats.find(s=>s.id===id); }
+function activeMembers(){ return state.members.filter(m=>m.status==='active'); }
+function memberStatusInfo(m){
+  if(m.status!=='active') return {label:'Inactive', cls:'badge-grey'};
+  if(!m.validityEnd) return {label:'No Plan', cls:'badge-grey'};
+  const d = daysBetween(todayISO(), m.validityEnd);
+  if(d<0) return {label:'Expired', cls:'badge-red'};
+  if(d<=7) return {label:'Expiring ('+d+'d)', cls:'badge-gold'};
+  return {label:'Active', cls:'badge-green'};
+}
+function csvDownload(filename, rows){
+  const csv = rows.map(r => r.map(c => {
+    let s = String(c==null?'':c);
+    if(/[",\n]/.test(s)) s = '"'+s.replace(/"/g,'""')+'"';
+    return s;
+  }).join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+function resizeImage(file, maxDim, quality){
+  return new Promise((resolve,reject)=>{
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        let w = img.width, h = img.height;
+        if(w>h && w>maxDim){ h = Math.round(h*maxDim/w); w = maxDim; }
+        else if(h>=w && h>maxDim){ w = Math.round(w*maxDim/h); h = maxDim; }
+        const canvas = document.createElement('canvas');
+        canvas.width=w; canvas.height=h;
+        canvas.getContext('2d').drawImage(img,0,0,w,h);
+        resolve(canvas.toDataURL('image/jpeg', quality||0.72));
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+function hasPerm(action){
+  // Staff role: read + collect fees + attendance, but cannot delete, manage expenses/settings/users
+  if(!session.user) return false;
+  if(session.user.role==='Admin') return true;
+  const staffAllowed = ['view','addMember','editMember','collectFee','attendance','allocateSeat'];
+  return staffAllowed.includes(action);
+}
+function guardPerm(action, msg){
+  if(!hasPerm(action)){ toast(msg||'Your role does not have permission for this action','error'); return false; }
+  return true;
+}
+
+/* ---------------- modal ---------------- */
+function openModal(title, bodyHtml, footHtml, wide){
+  document.getElementById('modalBox').className = 'modal' + (wide?' wide':'');
+  document.getElementById('modalBox').innerHTML = `
+    <div class="modal-head"><h3>${title}</h3><button class="modal-close" onclick="closeModal()">&times;</button></div>
+    <div class="modal-body">${bodyHtml}</div>
+    ${footHtml? `<div class="modal-foot">${footHtml}</div>` : ''}
+  `;
+  document.getElementById('modalRoot').classList.add('active');
+}
+function closeModal(){ document.getElementById('modalRoot').classList.remove('active'); }
+
+/* =========================================================================
+   NAVIGATION
+   ========================================================================= */
+const NAV = [
+  {id:'dashboard', label:'Dashboard', icon:'dashboard'},
+  {id:'members', label:'Members', icon:'members'},
+  {id:'seats', label:'Seats', icon:'seats'},
+  {id:'fees', label:'Fees & Plans', icon:'fees'},
+  {id:'attendance', label:'Attendance', icon:'attendance'},
+  {id:'expenses', label:'Expenses', icon:'expenses', adminOnly:true},
+  {id:'reports', label:'Reports', icon:'reports', adminOnly:true},
+  {id:'settings', label:'Settings', icon:'settings', adminOnly:true},
+];
+function renderNav(){
+  const nav = document.getElementById('navList');
+  nav.innerHTML = NAV.filter(n => !n.adminOnly || session.user.role==='Admin').map(n => `
+    <div class="nav-item ${activeTab===n.id?'active':''}" onclick="setTab('${n.id}')">
+      ${ICONS[n.icon]}<span>${n.label}</span>
+    </div>
+  `).join('');
+}
+function setTab(tab){
+  activeTab = tab;
+  document.getElementById('topbarTitle').textContent = NAV.find(n=>n.id===tab).label;
+  renderNav();
+  renderView();
+}
+function renderView(){
+  const v = document.getElementById('view');
+  if(activeTab==='dashboard'){ v.innerHTML = viewDashboard(); setTimeout(initDashboardCharts, 10); }
+  else if(activeTab==='members') v.innerHTML = viewMembers();
+  else if(activeTab==='seats') v.innerHTML = viewSeats();
+  else if(activeTab==='fees') v.innerHTML = viewFees();
+  else if(activeTab==='attendance') v.innerHTML = viewAttendance();
+  else if(activeTab==='expenses') v.innerHTML = viewExpenses();
+  else if(activeTab==='reports') v.innerHTML = viewReports();
+  else if(activeTab==='settings') v.innerHTML = viewSettings();
+}
+
+/* =========================================================================
+   DASHBOARD
+   ========================================================================= */
+function viewDashboard(){
+  const totalSeats = state.seats.length;
+  const occupied = state.seats.filter(s=>s.status==='occupied').length;
+  const reserved = state.seats.filter(s=>s.status==='reserved').length;
+  const available = totalSeats - occupied - reserved;
+  const today = todayISO();
+  const attToday = state.attendance.filter(a=>a.date===today).length;
+  const monthStr = today.slice(0,7);
+  const feesToday = state.feeTransactions.filter(t=>t.date===today).reduce((s,t)=>s+Number(t.amount),0);
+  const feesMonth = state.feeTransactions.filter(t=>t.date.slice(0,7)===monthStr).reduce((s,t)=>s+Number(t.amount),0);
+  const pendingFees = state.members.filter(m=>m.status==='active').reduce((s,m)=>s+Number(m.dueAmount||0),0);
+  const expiring = state.members.filter(m=> m.status==='active' && m.validityEnd && daysBetween(today,m.validityEnd)>=0 && daysBetween(today,m.validityEnd)<=7).length;
+  const expensesMonth = state.expenses.filter(e=>e.date.slice(0,7)===monthStr).reduce((s,e)=>s+Number(e.amount),0);
+  const profit = feesMonth - expensesMonth;
+
+  const recentMembers = [...state.members].sort((a,b)=> (b.createdAt||'').localeCompare(a.createdAt||'')).slice(0,5);
+  const recentTx = [...state.feeTransactions].sort((a,b)=> b.date.localeCompare(a.date) || (b.receiptNo-a.receiptNo)).slice(0,6);
+  const expiringList = state.members.filter(m=> m.status==='active' && m.validityEnd && daysBetween(today,m.validityEnd)<=7).sort((a,b)=>a.validityEnd.localeCompare(b.validityEnd)).slice(0,6);
+
+  return `
+  <div class="view-header">
+    <div><h2>${escapeHtml(state.business.name)}</h2><div class="subtitle">Overview — ${fmtDate(today)}</div></div>
+    <button class="btn btn-gold" onclick="openMemberModal()">${ICONS.plus} New Member</button>
+  </div>
+
+  <div class="grid-stats">
+    <div class="stat-card"><div class="stat-label">Total Seats</div><div class="stat-value">${totalSeats}</div><div class="stat-sub">${state.settings.seatTypes.length} seat types</div></div>
+    <div class="stat-card"><div class="stat-label">Reserved / Occupied</div><div class="stat-value">${occupied+reserved}</div><div class="stat-sub">${occupied} occupied · ${reserved} reserved</div></div>
+    <div class="stat-card good"><div class="stat-label">Available</div><div class="stat-value">${available}</div><div class="stat-sub">Ready to allocate</div></div>
+    <div class="stat-card"><div class="stat-label">Today's Attendance</div><div class="stat-value">${attToday}</div><div class="stat-sub">of ${activeMembers().length} active members</div></div>
+    <div class="stat-card good"><div class="stat-label">Fees Collected (Month)</div><div class="stat-value">${fmtMoney(feesMonth)}</div><div class="stat-sub">${fmtMoney(feesToday)} today</div></div>
+    <div class="stat-card warn"><div class="stat-label">Pending Fees</div><div class="stat-value">${fmtMoney(pendingFees)}</div><div class="stat-sub">across active members</div></div>
+    <div class="stat-card gold"><div class="stat-label">Expiring Memberships</div><div class="stat-value">${expiring}</div><div class="stat-sub">within 7 days</div></div>
+    <div class="stat-card"><div class="stat-label">Monthly Expenses</div><div class="stat-value">${fmtMoney(expensesMonth)}</div><div class="stat-sub" style="color:${profit>=0?'var(--green)':'var(--red)'}">Net: ${fmtMoney(profit)}</div></div>
+  </div>
+
+  <div style="display:grid; grid-template-columns:1.3fr 1fr; gap:18px;" class="dash-cols">
+  <div>
+    <div class="panel">
+      <div class="panel-head"><h3>Financial Overview (Last 7 Days)</h3></div>
+      <div class="panel-body">
+        <canvas id="financeChart" style="width:100%; max-height:240px;"></canvas>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h3>Recent fee collections</h3><span class="cell-sub" style="cursor:pointer;color:var(--blue);" onclick="setTab('fees')">View all →</span></div>
+      <div class="panel-body table-wrap">
+        ${recentTx.length? `<table><thead><tr><th>Receipt</th><th>Member</th><th>Amount</th><th>Mode</th><th>Date</th></tr></thead><tbody>
+          ${recentTx.map(t=>{const m=memberById(t.memberId); return `<tr><td class="mono">#${t.receiptNo}</td><td>${escapeHtml(m?m.name:'—')}</td><td>${fmtMoney(t.amount)}</td><td><span class="badge badge-blue">${t.mode}</span></td><td>${fmtDate(t.date)}</td></tr>`}).join('')}
+        </tbody></table>` : `<div class="empty-state"><p>No fee collections yet.</p></div>`}
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h3>Recently joined</h3><span class="cell-sub" style="cursor:pointer;color:var(--blue);" onclick="setTab('members')">View all →</span></div>
+      <div class="panel-body table-wrap">
+        ${recentMembers.length? `<table><thead><tr><th>Member</th><th>Seat</th><th>Joined</th><th>Status</th></tr></thead><tbody>
+          ${recentMembers.map(m=>{const st=memberStatusInfo(m); const seat=seatById(m.seatId); return `<tr><td class="row-flex"><div class="avatar-fallback">${initials(m.name)}</div><div><div class="cell-name">${escapeHtml(m.name)}</div><div class="cell-sub mono">${m.memberId}</div></div></td><td>${seat?seat.number:'—'}</td><td>${fmtDate(m.joiningDate)}</td><td><span class="badge ${st.cls}">${st.label}</span></td></tr>`}).join('')}
+        </tbody></table>` : `<div class="empty-state"><p>No members yet. Add your first member.</p></div>`}
+      </div>
+    </div>
+  </div>
+  <div>
+    <div class="panel">
+      <div class="panel-head"><h3>Seat snapshot</h3></div>
+      <div class="panel-body">
+        <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:12px;"><span>Occupied: <b>${occupied}/${totalSeats}</b></span></div>
+        <canvas id="seatChart" style="max-height:220px; margin:0 auto;"></canvas>
+        <div style="margin-top:20px; display:flex; gap:8px; flex-wrap:wrap; justify-content:center;">
+          <button class="btn btn-sm btn-ghost" onclick="setTab('seats')">${ICONS.seats} Manage seats</button>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h3>Expiring soon</h3></div>
+      <div class="panel-body">
+        ${expiringList.length? expiringList.map(m=>{const d=daysBetween(today,m.validityEnd); return `
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);">
+            <div><div class="cell-name">${escapeHtml(m.name)}</div><div class="cell-sub">${d<0?('Expired '+Math.abs(d)+'d ago'):('in '+d+' day'+(d==1?'':'s'))}</div></div>
+            <button class="btn btn-sm btn-ghost" onclick="openCollectFeeModal('${m.id}')">Renew</button>
+          </div>`}).join('') : `<div class="empty-state"><p>Nothing expiring in the next week.</p></div>`}
+      </div>
+    </div>
+  </div>
+  </div>
+  <style>@media(max-width:1050px){.dash-cols{grid-template-columns:1fr !important;}}</style>
+  `;
+}
+
+let dashboardCharts = [];
+function initDashboardCharts() {
+  dashboardCharts.forEach(c => c.destroy());
+  dashboardCharts = [];
+  
+  const ctxSeat = document.getElementById('seatChart');
+  if(ctxSeat) {
+    const occupied = state.seats.filter(s=>s.status==='occupied').length;
+    const reserved = state.seats.filter(s=>s.status==='reserved').length;
+    const available = state.seats.length - occupied - reserved;
+    dashboardCharts.push(new Chart(ctxSeat, {
+      type: 'doughnut',
+      data: {
+        labels: ['Available', 'Occupied', 'Reserved'],
+        datasets: [{
+          data: [available, occupied, reserved],
+          backgroundColor: ['#10b981', '#3b82f6', '#f59e0b'],
+          borderWidth: 0,
+          hoverOffset: 4
+        }]
+      },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, cutout: '70%' }
+    }));
+  }
+
+  const ctxFinance = document.getElementById('financeChart');
+  if(ctxFinance) {
+    const labels = [];
+    const feesData = [];
+    const expData = [];
+    for(let i=6; i>=0; i--){
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const dStr = d.toISOString().slice(0,10);
+      labels.push(dStr.slice(5)); // MM-DD
+      const dayFees = state.feeTransactions.filter(t=>t.date===dStr).reduce((s,t)=>s+Number(t.amount),0);
+      const dayExp = state.expenses.filter(e=>e.date===dStr).reduce((s,e)=>s+Number(e.amount),0);
+      feesData.push(dayFees);
+      expData.push(dayExp);
+    }
+    dashboardCharts.push(new Chart(ctxFinance, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [
+          { label: 'Fees Collected', data: feesData, backgroundColor: '#3b82f6', borderRadius: 4 },
+          { label: 'Expenses', data: expData, backgroundColor: '#ef4444', borderRadius: 4 }
+        ]
+      },
+      options: { 
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: 'top' } },
+        scales: { y: { beginAtZero: true, grid: { color: '#e2e8f0' } }, x: { grid: { display: false } } }
+      }
+    }));
+  }
+}
+
+/* =========================================================================
+   MEMBERS
+   ========================================================================= */
+let memberFilter = {status:'all', q:''};
+function viewMembers(){
+  let list = state.members.slice();
+  if(memberFilter.status!=='all') list = list.filter(m=>m.status===memberFilter.status);
+  if(memberFilter.q){
+    const q = memberFilter.q.toLowerCase();
+    list = list.filter(m=> (m.name||'').toLowerCase().includes(q) || (m.memberId||'').toLowerCase().includes(q) || (m.mobile||'').includes(q));
+  }
+  list.sort((a,b)=> (b.createdAt||'').localeCompare(a.createdAt||''));
+
+  return `
+  <div class="view-header">
+    <div><h2>Members</h2><div class="subtitle">${state.members.length} total · ${activeMembers().length} active</div></div>
+    <div style="display:flex; gap:8px;">
+      <button class="btn btn-ghost" onclick="exportMembersCSV()">${ICONS.download} Export CSV</button>
+      <button class="btn btn-gold" onclick="openMemberModal()">${ICONS.plus} New Member</button>
+    </div>
+  </div>
+  <div class="toolbar">
+    <input class="grow" type="text" placeholder="Search by name, ID or mobile…" value="${escapeHtml(memberFilter.q)}" oninput="memberFilter.q=this.value; renderView();">
+    <select onchange="memberFilter.status=this.value; renderView();">
+      <option value="all" ${memberFilter.status==='all'?'selected':''}>All status</option>
+      <option value="active" ${memberFilter.status==='active'?'selected':''}>Active</option>
+      <option value="inactive" ${memberFilter.status==='inactive'?'selected':''}>Inactive</option>
+    </select>
+  </div>
+  <div class="panel">
+    <div class="panel-body table-wrap">
+      ${list.length? `<table><thead><tr><th>Member</th><th>Contact</th><th>Course</th><th>Seat</th><th>Validity</th><th>Due</th><th>Status</th><th></th></tr></thead><tbody>
+        ${list.map(m=>{
+          const st = memberStatusInfo(m); const seat = seatById(m.seatId);
+          return `<tr>
+            <td class="row-flex">
+              ${m.photo? `<img class="avatar" src="${m.photo}">` : `<div class="avatar-fallback">${initials(m.name)}</div>`}
+              <div><div class="cell-name" style="cursor:pointer;" onclick="openMemberProfile('${m.id}')">${escapeHtml(m.name)}</div><div class="cell-sub mono">${m.memberId}</div></div>
+            </td>
+            <td>${escapeHtml(m.mobile||'—')}<div class="cell-sub">${escapeHtml(m.address||'').slice(0,28)}</div></td>
+            <td>${escapeHtml(m.course||'—')}</td>
+            <td>${seat? `<span class="badge badge-blue">${seat.number}</span>` : '<span class="cell-sub">Unassigned</span>'}</td>
+            <td>${m.validityEnd? fmtDate(m.validityEnd) : '—'}</td>
+            <td>${m.dueAmount? `<span style="color:var(--red);font-weight:700;">${fmtMoney(m.dueAmount)}</span>` : '<span class="cell-sub">—</span>'}</td>
+            <td><span class="badge ${st.cls}">${st.label}</span></td>
+            <td class="actions-cell">
+              <button class="icon-btn" title="View" onclick="openMemberProfile('${m.id}')">${ICONS.members}</button>
+              <button class="icon-btn" title="Edit" onclick="openMemberModal('${m.id}')">${ICONS.edit}</button>
+              <button class="icon-btn" title="Delete" onclick="deleteMember('${m.id}')">${ICONS.trash}</button>
+            </td>
+          </tr>`;
+        }).join('')}
+      </tbody></table>` : `<div class="empty-state">${ICONS.members}<h4>No members found</h4><p>Add your first member to get started.</p><button class="btn btn-gold" onclick="openMemberModal()">${ICONS.plus} New Member</button></div>`}
+    </div>
+  </div>`;
+}
+
+function openMemberModal(id){
+  if(!guardPerm(id?'editMember':'addMember')) return;
+  const m = id? memberById(id) : null;
+  const vacantSeats = state.seats.filter(s=> s.status==='vacant' || (m && s.id===m.seatId));
+  openModal(m?`Edit Member — ${escapeHtml(m.name)}`:'New Member', `
+    <form id="memberForm">
+      <div class="upload-row" style="margin-bottom:16px;">
+        <img class="upload-preview" id="photoPreview" src="${m&&m.photo?m.photo:''}" style="${m&&m.photo?'':'display:none;'}">
+        <div class="avatar-fallback" id="photoFallback" style="width:56px;height:56px;font-size:16px;${m&&m.photo?'display:none;':''}">${initials(m?m.name:'')}</div>
+        <div>
+          <label class="btn btn-sm btn-ghost" style="display:inline-flex;">Upload photo<input type="file" accept="image/*" id="photoInput" style="display:none;"></label>
+          <div class="cell-sub">Passport-size photo, auto-resized</div>
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="field full"><label>Full Name *</label><input required id="f_name" value="${m?escapeHtml(m.name):''}"></div>
+        <div class="field"><label>Mobile Number *</label><input required id="f_mobile" value="${m?escapeHtml(m.mobile):''}" placeholder="10-digit mobile"></div>
+        <div class="field"><label>Emergency Contact</label><input id="f_emergency" value="${m?escapeHtml(m.emergencyContact||''):''}" placeholder="Name / phone"></div>
+        <div class="field full"><label>Address</label><textarea id="f_address" rows="2">${m?escapeHtml(m.address||''):''}</textarea></div>
+        <div class="field"><label>Course / Exam</label><input id="f_course" value="${m?escapeHtml(m.course||''):''}" placeholder="e.g. UPSC, B.Com, NEET"></div>
+        <div class="field"><label>ID Proof (type + number)</label><input id="f_id" value="${m?escapeHtml(m.idProof||''):''}" placeholder="Aadhaar 1234-XXXX-5678"></div>
+        <div class="field"><label>Joining Date *</label><input required type="date" id="f_join" value="${m?m.joiningDate:todayISO()}"></div>
+        <div class="field"><label>Seat</label>
+          <select id="f_seat"><option value="">Unassigned</option>${vacantSeats.map(s=>`<option value="${s.id}" ${m&&m.seatId===s.id?'selected':''}>${s.number} — ${s.type}</option>`).join('')}</select>
+        </div>
+        <div class="field"><label>Plan</label>
+          <select id="f_plan"><option value="">No plan yet</option>${state.plans.map(p=>`<option value="${p.id}" ${m&&m.planId===p.id?'selected':''}>${p.name} (${fmtMoney(p.price)})</option>`).join('')}</select>
+        </div>
+        <div class="field"><label>Membership Valid Till</label><input type="date" id="f_validity" value="${m?m.validityEnd||'':''}"></div>
+        <div class="field"><label>Status</label>
+          <select id="f_status"><option value="active" ${!m||m.status==='active'?'selected':''}>Active</option><option value="inactive" ${m&&m.status==='inactive'?'selected':''}>Inactive</option></select>
+        </div>
+      </div>
+    </form>
+  `, `<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveMember(${m?`'${m.id}'`:'null'})">${ICONS.edit} Save Member</button>`, true);
+
+  document.getElementById('photoInput').addEventListener('change', async (e)=>{
+    const file = e.target.files[0]; if(!file) return;
+    const dataUrl = await resizeImage(file, 200, 0.75);
+    document.getElementById('photoPreview').src = dataUrl;
+    document.getElementById('photoPreview').style.display='';
+    document.getElementById('photoFallback').style.display='none';
+    document.getElementById('photoInput').dataset.value = dataUrl;
+  });
+}
+function saveMember(id){
+  const name = document.getElementById('f_name').value.trim();
+  const mobile = document.getElementById('f_mobile').value.trim();
+  if(!name || !mobile){ toast('Name and mobile are required','error'); return; }
+  const seatId = document.getElementById('f_seat').value || null;
+  const photoInput = document.getElementById('photoInput');
+  const photoVal = photoInput.dataset.value;
+
+  let m = id? memberById(id) : null;
+  const oldSeatId = m? m.seatId : null;
+  const isNew = !m;
+  if(isNew){
+    m = { id: uid(), memberId: 'LIB' + String(state.settings.memberCounter++).padStart(4,'0'), createdAt: new Date().toISOString(), dueAmount:0 };
+    state.members.push(m);
+  }
+  m.name = name; m.mobile = mobile;
+  m.emergencyContact = document.getElementById('f_emergency').value.trim();
+  m.address = document.getElementById('f_address').value.trim();
+  m.course = document.getElementById('f_course').value.trim();
+  m.idProof = document.getElementById('f_id').value.trim();
+  m.joiningDate = document.getElementById('f_join').value;
+  m.planId = document.getElementById('f_plan').value || null;
+  m.validityEnd = document.getElementById('f_validity').value || null;
+  m.status = document.getElementById('f_status').value;
+  m.seatId = seatId;
+  if(photoVal) m.photo = photoVal;
+
+  // reconcile seat occupancy
+  if(oldSeatId && oldSeatId!==seatId){ const os = seatById(oldSeatId); if(os){ os.status='vacant'; os.memberId=null; } }
+  if(seatId){ const ns = seatById(seatId); if(ns){ ns.status='occupied'; ns.memberId=m.id; } }
+
+  logAction(isNew?'Member added':'Member updated', m.name+' ('+m.memberId+')');
+  closeModal(); save(); renderView();
+  toast(isNew? 'Member added':'Member updated', 'success');
+}
+function deleteMember(id){
+  if(!guardPerm('deleteMember','Only Admin can delete members')) return;
+  const m = memberById(id); if(!m) return;
+  if(!confirm(`Delete member "${m.name}"? This cannot be undone.`)) return;
+  if(m.seatId){ const s = seatById(m.seatId); if(s){ s.status='vacant'; s.memberId=null; } }
+  state.members = state.members.filter(x=>x.id!==id);
+  logAction('Member deleted', m.name+' ('+m.memberId+')');
+  save(); renderView();
+  toast('Member deleted');
+}
+function openMemberProfile(id){
+  const m = memberById(id); if(!m) return;
+  const seat = seatById(m.seatId);
+  const plan = planById(m.planId);
+  const st = memberStatusInfo(m);
+  const tx = state.feeTransactions.filter(t=>t.memberId===id).sort((a,b)=>b.date.localeCompare(a.date));
+  openModal(`Member Profile`, `
+    <div style="display:flex; gap:16px; align-items:center; margin-bottom:16px;">
+      ${m.photo? `<img class="avatar" style="width:64px;height:64px;" src="${m.photo}">` : `<div class="avatar-fallback" style="width:64px;height:64px;font-size:20px;">${initials(m.name)}</div>`}
+      <div>
+        <h3>${escapeHtml(m.name)}</h3>
+        <div class="cell-sub mono">${m.memberId} · <span class="badge ${st.cls}">${st.label}</span></div>
+      </div>
+    </div>
+    <div class="form-grid" style="font-size:13px;">
+      <div><b>Mobile</b><div class="cell-sub">${escapeHtml(m.mobile||'—')}</div></div>
+      <div><b>Emergency Contact</b><div class="cell-sub">${escapeHtml(m.emergencyContact||'—')}</div></div>
+      <div class="full"><b>Address</b><div class="cell-sub">${escapeHtml(m.address||'—')}</div></div>
+      <div><b>Course/Exam</b><div class="cell-sub">${escapeHtml(m.course||'—')}</div></div>
+      <div><b>ID Proof</b><div class="cell-sub">${escapeHtml(m.idProof||'—')}</div></div>
+      <div><b>Joining Date</b><div class="cell-sub">${fmtDate(m.joiningDate)}</div></div>
+      <div><b>Seat</b><div class="cell-sub">${seat? seat.number+' ('+seat.type+')':'Unassigned'}</div></div>
+      <div><b>Plan</b><div class="cell-sub">${plan? plan.name : '—'}</div></div>
+      <div><b>Valid Till</b><div class="cell-sub">${m.validityEnd?fmtDate(m.validityEnd):'—'}</div></div>
+      <div><b>Due Amount</b><div class="cell-sub" style="color:${m.dueAmount?'var(--red)':'inherit'}">${fmtMoney(m.dueAmount||0)}</div></div>
+    </div>
+    <h4 style="margin-top:18px; font-size:14px;">Fee history</h4>
+    <div class="table-wrap">${tx.length? `<table><thead><tr><th>Receipt</th><th>Type</th><th>Amount</th><th>Mode</th><th>Date</th></tr></thead><tbody>
+      ${tx.map(t=>`<tr><td class="mono">#${t.receiptNo}</td><td>${t.type}</td><td>${fmtMoney(t.amount)}</td><td>${t.mode}</td><td>${fmtDate(t.date)}</td></tr>`).join('')}
+    </tbody></table>` : `<div class="cell-sub">No transactions yet.</div>`}</div>
+  `, `<button class="btn btn-ghost" onclick="closeModal()">Close</button>
+      <button class="btn btn-ghost" onclick="closeModal(); openMemberModal('${m.id}')">${ICONS.edit} Edit</button>
+      <button class="btn btn-primary" onclick="closeModal(); openCollectFeeModal('${m.id}')">${ICONS.cash} Collect Fee</button>`, true);
+}
+function exportMembersCSV(){
+  const rows = [['Member ID','Name','Mobile','Address','Course','Joining Date','Seat','Plan','Valid Till','Due Amount','Status']];
+  state.members.forEach(m=>{
+    const seat = seatById(m.seatId); const plan = planById(m.planId);
+    rows.push([m.memberId,m.name,m.mobile,m.address,m.course,m.joiningDate,seat?seat.number:'',plan?plan.name:'',m.validityEnd||'',m.dueAmount||0,m.status]);
+  });
+  csvDownload('members.csv', rows);
+  logAction('Exported members CSV','');
+}
+
+/* =========================================================================
+   SEATS
+   ========================================================================= */
+function viewSeats(){
+  const totalSeats = state.seats.length;
+  const occupied = state.seats.filter(s=>s.status==='occupied').length;
+  const reserved = state.seats.filter(s=>s.status==='reserved').length;
+  const available = totalSeats - occupied - reserved;
+  return `
+  <div class="view-header">
+    <div><h2>Seat Management</h2><div class="subtitle">${totalSeats} total seats/cabins</div></div>
+    <div style="display:flex; gap:8px;">
+      <button class="btn btn-ghost" onclick="openSeatTypesModal()">Seat Types</button>
+      <button class="btn btn-gold" onclick="openAddSeatsModal()">${ICONS.plus} Add Seats</button>
+    </div>
+  </div>
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:var(--green-soft); border:1px solid #c9dfcd;"></div>Vacant (${available})</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#fff; box-shadow:inset 0 0 0 1.5px var(--blue);"></div>Occupied (${occupied})</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--gold-soft); border:1px solid #e2c692;"></div>Reserved (${reserved})</div>
+  </div>
+  <div class="panel"><div class="panel-body">
+    <div class="seat-grid">
+      ${state.seats.map(s=>{
+        const m = s.memberId? memberById(s.memberId) : null;
+        return `<div class="seat ${s.status}" onclick="openSeatActionModal('${s.id}')">
+          <div class="seat-num">${s.number}</div>
+          <div class="seat-type">${s.type}</div>
+          ${m? `<div class="seat-name">${escapeHtml(m.name.split(' ')[0])}</div>` : (s.status==='reserved'? `<div class="seat-name">${escapeHtml(s.reservedNote||'Reserved')}</div>`:'')}
+        </div>`;
+      }).join('')}
+    </div>
+  </div></div>`;
+}
+function openSeatActionModal(id){
+  const s = seatById(id); if(!s) return;
+  const m = s.memberId? memberById(s.memberId) : null;
+  let body = `<div style="margin-bottom:14px;"><h3>${s.number}</h3><div class="cell-sub">${s.type} · <span class="badge ${s.status==='vacant'?'badge-green':s.status==='occupied'?'badge-blue':'badge-gold'}">${s.status}</span></div></div>`;
+  let foot = '';
+  if(s.status==='occupied' && m){
+    body += `<p style="font-size:13px;">Occupied by <b>${escapeHtml(m.name)}</b> (${m.memberId})</p>`;
+    const otherVacant = state.seats.filter(x=>x.status==='vacant');
+    body += `<div class="field"><label>Transfer to seat</label><select id="transferSeat"><option value="">Select vacant seat…</option>${otherVacant.map(v=>`<option value="${v.id}">${v.number} — ${v.type}</option>`).join('')}</select></div>`;
+    foot = `<button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-ghost" onclick="transferSeat('${s.id}')">${ICONS.swap} Transfer</button>
+      <button class="btn btn-danger" onclick="vacateSeat('${s.id}')">Vacate Seat</button>`;
+  } else if(s.status==='vacant'){
+    const unassigned = activeMembers().filter(x=>!x.seatId);
+    body += `<div class="field"><label>Allocate to member</label><select id="allocateMember"><option value="">Select active member…</option>${unassigned.map(u=>`<option value="${u.id}">${u.name} (${u.memberId})</option>`).join('')}</select></div>`;
+    foot = `<button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-ghost" onclick="reserveSeat('${s.id}')">Mark Reserved</button>
+      <button class="btn btn-primary" onclick="allocateSeat('${s.id}')">Allocate</button>`;
+  } else {
+    body += `<p class="cell-sub">${escapeHtml(s.reservedNote||'No note')}</p>`;
+    foot = `<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="unreserveSeat('${s.id}')">Make Vacant</button>`;
+  }
+  body += `<div style="margin-top:14px;"><button class="btn btn-sm btn-danger" onclick="removeSeat('${s.id}')">${ICONS.trash} Remove this seat</button></div>`;
+  openModal('Seat: '+s.number, body, foot);
+}
+function allocateSeat(seatId){
+  if(!guardPerm('allocateSeat')) return;
+  const memberId = document.getElementById('allocateMember').value;
+  if(!memberId){ toast('Select a member','error'); return; }
+  const s = seatById(seatId); const m = memberById(memberId);
+  if(m.seatId){ const old = seatById(m.seatId); if(old){old.status='vacant'; old.memberId=null;} }
+  s.status='occupied'; s.memberId = memberId; m.seatId = seatId;
+  logAction('Seat allocated', s.number+' → '+m.name);
+  closeModal(); save(); renderView(); toast('Seat allocated','success');
+}
+function vacateSeat(seatId){
+  const s = seatById(seatId); const m = s.memberId? memberById(s.memberId):null;
+  s.status='vacant'; s.memberId=null; if(m) m.seatId=null;
+  logAction('Seat vacated', s.number);
+  closeModal(); save(); renderView(); toast('Seat vacated');
+}
+function transferSeat(fromId){
+  const toId = document.getElementById('transferSeat').value;
+  if(!toId){ toast('Select target seat','error'); return; }
+  const from = seatById(fromId); const to = seatById(toId); const m = memberById(from.memberId);
+  from.status='vacant'; from.memberId=null;
+  to.status='occupied'; to.memberId=m.id; m.seatId=to.id;
+  logAction('Seat transferred', m.name+': '+from.number+' → '+to.number);
+  closeModal(); save(); renderView(); toast('Seat transferred','success');
+}
+function reserveSeat(seatId){
+  const note = prompt('Reservation note (optional):','') || 'Reserved';
+  const s = seatById(seatId); s.status='reserved'; s.reservedNote = note;
+  logAction('Seat reserved', s.number);
+  closeModal(); save(); renderView();
+}
+function unreserveSeat(seatId){
+  const s = seatById(seatId); s.status='vacant'; s.reservedNote='';
+  logAction('Seat un-reserved', s.number);
+  closeModal(); save(); renderView();
+}
+function removeSeat(seatId){
+  if(!guardPerm('deleteMember','Only Admin can remove seats')) return;
+  const s = seatById(seatId);
+  if(s.status==='occupied'){ toast('Vacate the seat before removing it','error'); return; }
+  if(!confirm(`Remove seat ${s.number}?`)) return;
+  state.seats = state.seats.filter(x=>x.id!==seatId);
+  logAction('Seat removed', s.number);
+  closeModal(); save(); renderView(); toast('Seat removed');
+}
+function openAddSeatsModal(){
+  openModal('Add Seats', `
+    <div class="form-grid">
+      <div class="field"><label>Number of seats to add</label><input type="number" id="addSeatCount" min="1" value="5"></div>
+      <div class="field"><label>Seat type</label><select id="addSeatType">${state.settings.seatTypes.map(t=>`<option>${t}</option>`).join('')}</select></div>
+      <div class="field full"><label>Prefix</label><input id="addSeatPrefix" value="S"></div>
+    </div>
+  `, `<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="addSeats()">Add Seats</button>`);
+}
+function addSeats(){
+  const count = parseInt(document.getElementById('addSeatCount').value)||0;
+  const type = document.getElementById('addSeatType').value;
+  const prefix = document.getElementById('addSeatPrefix').value.trim()||'S';
+  if(count<1){ toast('Enter a valid count','error'); return; }
+  let maxNum = state.seats.reduce((mx,s)=>{ const n = parseInt((s.number.match(/\d+/)||[0])[0]); return Math.max(mx,n); },0);
+  for(let i=0;i<count;i++){ maxNum++; state.seats.push({id:uid(), number: prefix+String(maxNum).padStart(2,'0'), type, status:'vacant', memberId:null, reservedNote:''}); }
+  logAction('Seats added', count+' × '+type);
+  closeModal(); save(); renderView(); toast(count+' seats added','success');
+}
+function openSeatTypesModal(){
+  const rowsHtml = state.settings.seatTypes.map((t, i) => `
+    <div class="seat-type-row" style="display:flex;gap:8px;margin-bottom:8px;">
+      <input class="seatTypeInput" value="${escapeHtml(t)}" style="flex:1;padding:8px 10px;border:1.5px solid var(--border);border-radius:7px;font-size:13.5px;">
+      <button class="icon-btn" onclick="this.closest('.seat-type-row').remove()" title="Remove">${ICONS.trash}</button>
+    </div>`).join('');
+
+  openModal('Seat Types / Plans Category', `
+    <div id="seatTypesList">${rowsHtml}</div>
+    <button class="btn btn-sm btn-ghost" style="margin-top:4px;" onclick="addSeatTypeRow()">+ Add type</button>
+  `, `<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveSeatTypes()">Save</button>`);
+}
+function addSeatTypeRow(){
+  const list = document.getElementById('seatTypesList');
+  if(!list) return;
+  const row = document.createElement('div');
+  row.className = 'seat-type-row';
+  row.style.cssText = 'display:flex;gap:8px;margin-bottom:8px;';
+  row.innerHTML = `<input class="seatTypeInput" placeholder="New type" style="flex:1;padding:8px 10px;border:1.5px solid var(--border);border-radius:7px;font-size:13.5px;">
+    <button class="icon-btn" onclick="this.closest('.seat-type-row').remove()" title="Remove">${ICONS.trash}</button>`;
+  list.appendChild(row);
+  row.querySelector('input').focus();
+}
+function saveSeatTypes(){
+  const vals = Array.from(document.querySelectorAll('.seatTypeInput')).map(i=>i.value.trim()).filter(Boolean);
+  if(!vals.length){ toast('Add at least one type','error'); return; }
+  state.settings.seatTypes = [...new Set(vals)];
+  logAction('Seat types updated', vals.join(', '));
+  closeModal(); save(); renderView(); toast('Seat types updated','success');
+}
+
+
+/* =========================================================================
+   FEES & PLANS
+   ========================================================================= */
+let feesSubTab = 'collections';
+function viewFees(){
+  const pendingMembers = state.members.filter(m=>m.status==='active' && m.dueAmount>0);
+  const totalPending = pendingMembers.reduce((s,m)=>s+Number(m.dueAmount),0);
+  return `
+  <div class="view-header">
+    <div><h2>Fees &amp; Plans</h2><div class="subtitle">Collections, plans, and pending dues</div></div>
+    <div style="display:flex; gap:8px;">
+      <button class="btn btn-ghost" onclick="openPlanModal()">${ICONS.plus} New Plan</button>
+      <button class="btn btn-gold" onclick="openCollectFeeModal()">${ICONS.cash} Collect Fee</button>
+    </div>
+  </div>
+  <div class="tabs-row">
+    <button class="tab-btn ${feesSubTab==='collections'?'active':''}" onclick="feesSubTab='collections'; renderView();">Collections</button>
+    <button class="tab-btn ${feesSubTab==='pending'?'active':''}" onclick="feesSubTab='pending'; renderView();">Pending (${pendingMembers.length})</button>
+    <button class="tab-btn ${feesSubTab==='plans'?'active':''}" onclick="feesSubTab='plans'; renderView();">Plans</button>
+  </div>
+  ${feesSubTab==='collections'? feesCollectionsTab() : feesSubTab==='pending'? feesPendingTab(pendingMembers,totalPending) : feesPlansTab()}
+  `;
+}
+function feesCollectionsTab(){
+  const tx = [...state.feeTransactions].sort((a,b)=> b.date.localeCompare(a.date) || (b.receiptNo-a.receiptNo));
+  return `<div class="panel"><div class="panel-head"><h3>All collections</h3><button class="btn btn-sm btn-ghost" onclick="exportFeesCSV()">${ICONS.download} Export</button></div>
+    <div class="panel-body table-wrap">
+    ${tx.length? `<table><thead><tr><th>Receipt</th><th>Member</th><th>Type</th><th>Amount</th><th>Mode</th><th>Date</th></tr></thead><tbody>
+      ${tx.map(t=>{const m=memberById(t.memberId); return `<tr><td class="mono">#${t.receiptNo}</td><td>${escapeHtml(m?m.name:'—')}</td><td>${t.type}</td><td>${fmtMoney(t.amount)}</td><td><span class="badge badge-blue">${t.mode}</span></td><td>${fmtDate(t.date)}</td></tr>`}).join('')}
+    </tbody></table>` : `<div class="empty-state"><p>No fee collections recorded yet.</p></div>`}
+    </div></div>`;
+}
+function feesPendingTab(list, total){
+  return `<div class="panel"><div class="panel-head"><h3>Pending fees</h3><b style="color:var(--red)">${fmtMoney(total)}</b></div>
+    <div class="panel-body table-wrap">
+    ${list.length? `<table><thead><tr><th>Member</th><th>Valid Till</th><th>Due Amount</th><th></th></tr></thead><tbody>
+      ${list.map(m=>`<tr><td class="cell-name">${escapeHtml(m.name)}</td><td>${m.validityEnd?fmtDate(m.validityEnd):'—'}</td><td style="color:var(--red);font-weight:700;">${fmtMoney(m.dueAmount)}</td><td><button class="btn btn-sm btn-primary" onclick="openCollectFeeModal('${m.id}')">Collect</button></td></tr>`).join('')}
+    </tbody></table>` : `<div class="empty-state"><p>No pending dues. Great job!</p></div>`}
+    </div></div>`;
+}
+function feesPlansTab(){
+  return `<div class="panel"><div class="panel-head"><h3>Membership plans</h3></div>
+    <div class="panel-body table-wrap">
+    <table><thead><tr><th>Plan</th><th>Duration</th><th>Price</th><th>Admission Fee</th><th>Seat Type</th><th></th></tr></thead><tbody>
+      ${state.plans.map(p=>`<tr><td class="cell-name">${escapeHtml(p.name)}</td><td>${p.duration}</td><td>${fmtMoney(p.price)}</td><td>${fmtMoney(p.admissionFee)}</td><td>${escapeHtml(p.seatType)}</td>
+        <td class="actions-cell"><button class="icon-btn" onclick="openPlanModal('${p.id}')">${ICONS.edit}</button><button class="icon-btn" onclick="deletePlan('${p.id}')">${ICONS.trash}</button></td></tr>`).join('')}
+    </tbody></table></div></div>`;
+}
+function openPlanModal(id){
+  const p = id? planById(id): null;
+  openModal(p?'Edit Plan':'New Plan', `
+    <div class="form-grid">
+      <div class="field full"><label>Plan name *</label><input id="pl_name" value="${p?escapeHtml(p.name):''}" placeholder="e.g. Monthly - General"></div>
+      <div class="field"><label>Duration</label><select id="pl_duration">
+        <option value="monthly" ${p&&p.duration==='monthly'?'selected':''}>Monthly (1 mo)</option>
+        <option value="quarterly" ${p&&p.duration==='quarterly'?'selected':''}>Quarterly (3 mo)</option>
+        <option value="half-yearly" ${p&&p.duration==='half-yearly'?'selected':''}>Half-Yearly (6 mo)</option>
+        <option value="yearly" ${p&&p.duration==='yearly'?'selected':''}>Yearly (12 mo)</option>
+      </select></div>
+      <div class="field"><label>Seat Type</label><select id="pl_seattype">${state.settings.seatTypes.map(t=>`<option ${p&&p.seatType===t?'selected':''}>${t}</option>`).join('')}</select></div>
+      <div class="field"><label>Price (₹) *</label><input type="number" id="pl_price" value="${p?p.price:''}"></div>
+      <div class="field"><label>Admission Fee (₹)</label><input type="number" id="pl_admission" value="${p?p.admissionFee:100}"></div>
+    </div>
+  `, `<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="savePlan(${p?`'${p.id}'`:'null'})">Save Plan</button>`);
+}
+function savePlan(id){
+  const name = document.getElementById('pl_name').value.trim();
+  const price = Number(document.getElementById('pl_price').value);
+  if(!name || !price){ toast('Name and price are required','error'); return; }
+  const duration = document.getElementById('pl_duration').value;
+  const monthsMap = {monthly:1, quarterly:3, 'half-yearly':6, yearly:12};
+  let p = id? planById(id) : null;
+  const isNew = !p;
+  if(isNew){ p = {id: uid()}; state.plans.push(p); }
+  p.name=name; p.price=price; p.duration=duration; p.months=monthsMap[duration];
+  p.admissionFee = Number(document.getElementById('pl_admission').value)||0;
+  p.seatType = document.getElementById('pl_seattype').value;
+  logAction(isNew?'Plan created':'Plan updated', name);
+  closeModal(); save(); renderView(); toast('Plan saved','success');
+}
+function deletePlan(id){
+  if(!guardPerm('deleteMember','Only Admin can delete plans')) return;
+  if(!confirm('Delete this plan?')) return;
+  state.plans = state.plans.filter(p=>p.id!==id);
+  save(); renderView(); toast('Plan deleted');
+}
+function openCollectFeeModal(memberId){
+  if(!guardPerm('collectFee')) return;
+  const options = state.members.map(m=>`<option value="${m.id}" ${memberId===m.id?'selected':''}>${escapeHtml(m.name)} (${m.memberId})</option>`).join('');
+  openModal('Collect Fee', `
+    <div class="form-grid">
+      <div class="field full"><label>Member *</label><select id="cf_member" onchange="cfMemberChanged()">${!memberId?'<option value="">Select member…</option>':''}${options}</select></div>
+      <div class="field"><label>Fee Type</label><select id="cf_type" onchange="cfTypeChanged()">
+        <option>Membership Fee (Renewal)</option><option>Admission Fee</option><option>Security Deposit</option><option>Other</option>
+      </select></div>
+      <div class="field" id="cf_planWrap"><label>Plan</label><select id="cf_plan">${state.plans.map(p=>`<option value="${p.id}">${p.name} — ${fmtMoney(p.price)}</option>`).join('')}</select></div>
+      <div class="field"><label>Amount (₹) *</label><input type="number" id="cf_amount" placeholder="0"></div>
+      <div class="field"><label>Payment Mode</label><select id="cf_mode"><option>Cash</option><option>UPI</option><option>Bank</option></select></div>
+      <div class="field"><label>Date</label><input type="date" id="cf_date" value="${todayISO()}"></div>
+      <div class="field full"><label>Notes</label><input id="cf_notes" placeholder="Optional"></div>
+      <div class="field full" id="cf_dueNote" style="display:none;"><small></small></div>
+    </div>
+  `, `<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="collectFee()">${ICONS.cash} Record Payment</button>`, true);
+  if(memberId) setTimeout(cfMemberChanged, 0);
+}
+function cfMemberChanged(){
+  const id = document.getElementById('cf_member').value;
+  const m = memberById(id);
+  if(m && m.planId) document.getElementById('cf_plan').value = m.planId;
+  cfTypeChanged();
+}
+function cfTypeChanged(){
+  const type = document.getElementById('cf_type').value;
+  document.getElementById('cf_planWrap').style.display = type==='Membership Fee (Renewal)'?'':'none';
+  const id = document.getElementById('cf_member').value;
+  const m = memberById(id);
+  const note = document.getElementById('cf_dueNote');
+  if(type==='Membership Fee (Renewal)' && m){
+    const plan = planById(document.getElementById('cf_plan').value) || planById(m.planId);
+    const owed = (plan?plan.price:0) + Number(m.dueAmount||0);
+    document.getElementById('cf_amount').value = owed || '';
+    note.style.display='';
+    note.querySelector('small').textContent = `Existing due: ${fmtMoney(m.dueAmount||0)} + plan price ${fmtMoney(plan?plan.price:0)} = ${fmtMoney(owed)} owed. Validity extends by the plan duration.`;
+  } else { note.style.display='none'; }
+}
+function collectFee(){
+  const memberId = document.getElementById('cf_member').value;
+  const amount = Number(document.getElementById('cf_amount').value);
+  if(!memberId){ toast('Select a member','error'); return; }
+  if(!amount || amount<=0){ toast('Enter a valid amount','error'); return; }
+  const m = memberById(memberId);
+  const type = document.getElementById('cf_type').value;
+  const mode = document.getElementById('cf_mode').value;
+  const date = document.getElementById('cf_date').value || todayISO();
+  const notes = document.getElementById('cf_notes').value.trim();
+  const receiptNo = ++state.settings.receiptCounter;
+
+  if(type==='Membership Fee (Renewal)'){
+    const planId = document.getElementById('cf_plan').value;
+    const plan = planById(planId);
+    if(plan){
+      const totalOwed = plan.price + Number(m.dueAmount||0);
+      m.dueAmount = Math.max(0, totalOwed - amount);
+      const base = (m.validityEnd && m.validityEnd >= todayISO()) ? m.validityEnd : todayISO();
+      m.validityEnd = addMonths(base, plan.months);
+      m.planId = planId;
+    }
+  }
+  state.feeTransactions.push({id:uid(), memberId, type, amount, mode, date, notes, receiptNo});
+  logAction('Fee collected', `${fmtMoney(amount)} from ${m.name} (${type})`);
+  closeModal(); save(); renderView();
+  toast(`Payment recorded — Receipt #${receiptNo}`, 'success');
+}
+function exportFeesCSV(){
+  const rows = [['Receipt No','Member','Type','Amount','Mode','Date','Notes']];
+  state.feeTransactions.forEach(t=>{ const m=memberById(t.memberId); rows.push([t.receiptNo,m?m.name:'',t.type,t.amount,t.mode,t.date,t.notes||'']); });
+  csvDownload('fee-collections.csv', rows);
+  logAction('Exported fees CSV','');
+}
+
+/* =========================================================================
+   ATTENDANCE
+   ========================================================================= */
+function viewAttendance(){
+  const date = window._attDate || todayISO();
+  const present = new Set(state.attendance.filter(a=>a.date===date).map(a=>a.memberId));
+  const list = activeMembers().sort((a,b)=>a.name.localeCompare(b.name));
+  return `
+  <div class="view-header">
+    <div><h2>Attendance</h2><div class="subtitle">${present.size} of ${list.length} active members present</div></div>
+    <input type="date" value="${date}" onchange="window._attDate=this.value; renderView();" style="padding:8px 10px;border:1.5px solid var(--border);border-radius:7px;">
+  </div>
+  <div class="panel"><div class="panel-body table-wrap">
+  ${list.length? `<table><thead><tr><th>Member</th><th>Seat</th><th>Status</th><th></th></tr></thead><tbody>
+    ${list.map(m=>{ const seat=seatById(m.seatId); const isPresent = present.has(m.id); return `<tr>
+      <td class="row-flex">${m.photo?`<img class="avatar" src="${m.photo}">`:`<div class="avatar-fallback">${initials(m.name)}</div>`}<div><div class="cell-name">${escapeHtml(m.name)}</div><div class="cell-sub mono">${m.memberId}</div></div></td>
+      <td>${seat?seat.number:'—'}</td>
+      <td><span class="badge ${isPresent?'badge-green':'badge-grey'}">${isPresent?'Present':'Not marked'}</span></td>
+      <td><button class="btn btn-sm ${isPresent?'btn-danger':'btn-primary'}" onclick="toggleAttendance('${m.id}','${date}')">${isPresent?'Unmark':'Mark Present'}</button></td>
+    </tr>`; }).join('')}
+  </tbody></table>` : `<div class="empty-state"><p>No active members to track.</p></div>`}
+  </div></div>`;
+}
+function toggleAttendance(memberId, date){
+  const idx = state.attendance.findIndex(a=>a.memberId===memberId && a.date===date);
+  if(idx>=0) state.attendance.splice(idx,1);
+  else state.attendance.push({memberId, date});
+  save(); renderView();
+}
+
+/* =========================================================================
+   EXPENSES
+   ========================================================================= */
+function viewExpenses(){
+  if(!guardPerm('viewExpenses')){} // staff blocked at nav level already
+  const month = window._expMonth || todayISO().slice(0,7);
+  const monthList = state.expenses.filter(e=>e.date.slice(0,7)===month).sort((a,b)=>b.date.localeCompare(a.date));
+  const total = monthList.reduce((s,e)=>s+Number(e.amount),0);
+  const byCategory = {};
+  monthList.forEach(e=>{ byCategory[e.category]=(byCategory[e.category]||0)+Number(e.amount); });
+  return `
+  <div class="view-header">
+    <div><h2>Expense Management</h2><div class="subtitle">Total this month: ${fmtMoney(total)}</div></div>
+    <div style="display:flex;gap:8px;">
+      <input type="month" value="${month}" onchange="window._expMonth=this.value; renderView();" style="padding:8px 10px;border:1.5px solid var(--border);border-radius:7px;">
+      <button class="btn btn-gold" onclick="openExpenseModal()">${ICONS.plus} Add Expense</button>
+    </div>
+  </div>
+  <div class="grid-stats" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));">
+    ${Object.keys(byCategory).length? Object.entries(byCategory).map(([c,v])=>`<div class="stat-card"><div class="stat-label">${escapeHtml(c)}</div><div class="stat-value" style="font-size:19px;">${fmtMoney(v)}</div></div>`).join('') : ''}
+  </div>
+  <div class="panel"><div class="panel-head"><h3>Expenses — ${month}</h3><button class="btn btn-sm btn-ghost" onclick="exportExpensesCSV()">${ICONS.download} Export</button></div>
+    <div class="panel-body table-wrap">
+    ${monthList.length? `<table><thead><tr><th>Category</th><th>Description</th><th>Amount</th><th>Mode</th><th>Date</th><th></th></tr></thead><tbody>
+      ${monthList.map(e=>`<tr><td><span class="badge badge-grey">${escapeHtml(e.category)}</span></td><td>${escapeHtml(e.description||'—')}</td><td>${fmtMoney(e.amount)}</td><td>${e.mode}</td><td>${fmtDate(e.date)}</td>
+      <td class="actions-cell"><button class="icon-btn" onclick="openExpenseModal('${e.id}')">${ICONS.edit}</button><button class="icon-btn" onclick="deleteExpense('${e.id}')">${ICONS.trash}</button></td></tr>`).join('')}
+    </tbody></table>` : `<div class="empty-state"><p>No expenses logged for this month.</p></div>`}
+    </div></div>`;
+}
+function openExpenseModal(id){
+  const e = id? state.expenses.find(x=>x.id===id) : null;
+  openModal(e?'Edit Expense':'Add Expense', `
+    <div class="form-grid">
+      <div class="field"><label>Category</label><select id="ex_cat">${EXPENSE_CATEGORIES.map(c=>`<option ${e&&e.category===c?'selected':''}>${c}</option>`).join('')}</select></div>
+      <div class="field"><label>Amount (₹) *</label><input type="number" id="ex_amount" value="${e?e.amount:''}"></div>
+      <div class="field full"><label>Description</label><input id="ex_desc" value="${e?escapeHtml(e.description||''):''}" placeholder="Optional details"></div>
+      <div class="field"><label>Payment Mode</label><select id="ex_mode"><option ${e&&e.mode==='Cash'?'selected':''}>Cash</option><option ${e&&e.mode==='UPI'?'selected':''}>UPI</option><option ${e&&e.mode==='Bank'?'selected':''}>Bank</option></select></div>
+      <div class="field"><label>Date</label><input type="date" id="ex_date" value="${e?e.date:todayISO()}"></div>
+    </div>
+  `, `<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveExpense(${e?`'${e.id}'`:'null'})">Save</button>`);
+}
+function saveExpense(id){
+  const amount = Number(document.getElementById('ex_amount').value);
+  if(!amount || amount<=0){ toast('Enter a valid amount','error'); return; }
+  let e = id? state.expenses.find(x=>x.id===id) : null;
+  const isNew = !e;
+  if(isNew){ e = {id:uid()}; state.expenses.push(e); }
+  e.category = document.getElementById('ex_cat').value;
+  e.amount = amount;
+  e.description = document.getElementById('ex_desc').value.trim();
+  e.mode = document.getElementById('ex_mode').value;
+  e.date = document.getElementById('ex_date').value || todayISO();
+  logAction(isNew?'Expense added':'Expense updated', e.category+' '+fmtMoney(e.amount));
+  closeModal(); save(); renderView(); toast('Expense saved','success');
+}
+function deleteExpense(id){
+  if(!confirm('Delete this expense?')) return;
+  state.expenses = state.expenses.filter(x=>x.id!==id);
+  save(); renderView(); toast('Expense deleted');
+}
+function exportExpensesCSV(){
+  const rows = [['Category','Description','Amount','Mode','Date']];
+  state.expenses.forEach(e=>rows.push([e.category,e.description||'',e.amount,e.mode,e.date]));
+  csvDownload('expenses.csv', rows);
+  logAction('Exported expenses CSV','');
+}
+
+/* =========================================================================
+   REPORTS
+   ========================================================================= */
+function viewReports(){
+  return `
+  <div class="view-header"><div><h2>Reports</h2><div class="subtitle">Generate and export operational reports</div></div></div>
+  <div class="grid-stats" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));">
+    ${reportCard('Member Report','All members with contact, plan and status.','memberReport')}
+    ${reportCard('Seat Occupancy Report','Current seat allocation across the centre.','seatReport')}
+    ${reportCard('Fee Collection Report','All fee receipts recorded.','feeReport')}
+    ${reportCard('Pending Fee Report','Members with outstanding dues.','pendingReport')}
+    ${reportCard('Expense Report','All logged expenses by category.','expenseReport')}
+    ${reportCard('Profit &amp; Loss Summary','Monthly income vs expenses.','plReport')}
+    ${reportCard('Membership Expiry Report','Memberships expiring or expired.','expiryReport')}
+    ${reportCard('Daily / Monthly Collection','Collections grouped by day.','collectionReport')}
+  </div>
+  <div id="reportOutput"></div>
+  `;
+}
+function reportCard(title, desc, fn){
+  return `<div class="panel" style="margin-bottom:0;"><div class="panel-body">
+    <h4 style="font-size:14.5px; margin-bottom:5px;">${title}</h4>
+    <p class="cell-sub" style="margin-bottom:12px;">${desc}</p>
+    <button class="btn btn-sm btn-primary" onclick="${fn}()">${ICONS.reports} Generate</button>
+  </div></div>`;
+}
+function reportWrap(title, rows, csvRows, csvName){
+  document.getElementById('reportOutput').innerHTML = `
+    <div class="panel" style="margin-top:20px;">
+      <div class="panel-head"><h3>${title}</h3>
+        <div style="display:flex; gap:8px;">
+          <button class="btn btn-sm btn-ghost" onclick='csvDownload(${JSON.stringify(csvName)}, ${JSON.stringify(csvRows)})'>${ICONS.download} CSV</button>
+          <button class="btn btn-sm btn-ghost" onclick="window.print()">${ICONS.print} Print / PDF</button>
+        </div>
+      </div>
+      <div class="panel-body table-wrap">${rows}</div>
+    </div>`;
+  document.getElementById('reportOutput').scrollIntoView({behavior:'smooth', block:'start'});
+}
+function memberReport(){
+  const rows = `<table><thead><tr><th>ID</th><th>Name</th><th>Mobile</th><th>Course</th><th>Seat</th><th>Status</th></tr></thead><tbody>
+    ${state.members.map(m=>{const seat=seatById(m.seatId); return `<tr><td class="mono">${m.memberId}</td><td>${escapeHtml(m.name)}</td><td>${escapeHtml(m.mobile)}</td><td>${escapeHtml(m.course||'—')}</td><td>${seat?seat.number:'—'}</td><td>${memberStatusInfo(m).label}</td></tr>`}).join('')}
+  </tbody></table>`;
+  const csv = [['ID','Name','Mobile','Course','Seat','Status'], ...state.members.map(m=>{const seat=seatById(m.seatId); return [m.memberId,m.name,m.mobile,m.course||'',seat?seat.number:'',memberStatusInfo(m).label];})];
+  reportWrap('Member Report', rows, csv, 'member-report.csv');
+}
+function seatReport(){
+  const rows = `<table><thead><tr><th>Seat</th><th>Type</th><th>Status</th><th>Occupant</th></tr></thead><tbody>
+    ${state.seats.map(s=>{const m=s.memberId?memberById(s.memberId):null; return `<tr><td class="mono">${s.number}</td><td>${s.type}</td><td>${s.status}</td><td>${m?escapeHtml(m.name):'—'}</td></tr>`}).join('')}
+  </tbody></table>`;
+  const csv = [['Seat','Type','Status','Occupant'], ...state.seats.map(s=>{const m=s.memberId?memberById(s.memberId):null; return [s.number,s.type,s.status,m?m.name:''];})];
+  reportWrap('Seat Occupancy Report', rows, csv, 'seat-occupancy-report.csv');
+}
+function feeReport(){
+  const rows = `<table><thead><tr><th>Receipt</th><th>Member</th><th>Type</th><th>Amount</th><th>Mode</th><th>Date</th></tr></thead><tbody>
+    ${state.feeTransactions.map(t=>{const m=memberById(t.memberId); return `<tr><td class="mono">#${t.receiptNo}</td><td>${m?escapeHtml(m.name):'—'}</td><td>${t.type}</td><td>${fmtMoney(t.amount)}</td><td>${t.mode}</td><td>${fmtDate(t.date)}</td></tr>`}).join('')}
+  </tbody></table>`;
+  const csv = [['Receipt','Member','Type','Amount','Mode','Date'], ...state.feeTransactions.map(t=>{const m=memberById(t.memberId); return [t.receiptNo, m?m.name:'', t.type, t.amount, t.mode, t.date];})];
+  reportWrap('Fee Collection Report', rows, csv, 'fee-collection-report.csv');
+}
+function pendingReport(){
+  const list = state.members.filter(m=>m.dueAmount>0);
+  const rows = `<table><thead><tr><th>Member</th><th>Mobile</th><th>Valid Till</th><th>Due</th></tr></thead><tbody>
+    ${list.map(m=>`<tr><td>${escapeHtml(m.name)}</td><td>${escapeHtml(m.mobile)}</td><td>${m.validityEnd?fmtDate(m.validityEnd):'—'}</td><td style="color:var(--red);font-weight:700;">${fmtMoney(m.dueAmount)}</td></tr>`).join('')}
+  </tbody></table>`;
+  const csv = [['Member','Mobile','Valid Till','Due'], ...list.map(m=>[m.name,m.mobile,m.validityEnd||'',m.dueAmount])];
+  reportWrap('Pending Fee Report', rows, csv, 'pending-fee-report.csv');
+}
+function expenseReport(){
+  const rows = `<table><thead><tr><th>Category</th><th>Description</th><th>Amount</th><th>Date</th></tr></thead><tbody>
+    ${state.expenses.map(e=>`<tr><td>${escapeHtml(e.category)}</td><td>${escapeHtml(e.description||'—')}</td><td>${fmtMoney(e.amount)}</td><td>${fmtDate(e.date)}</td></tr>`).join('')}
+  </tbody></table>`;
+  const csv = [['Category','Description','Amount','Date'], ...state.expenses.map(e=>[e.category,e.description||'',e.amount,e.date])];
+  reportWrap('Expense Report', rows, csv, 'expense-report.csv');
+}
+function plReport(){
+  const byMonth = {};
+  state.feeTransactions.forEach(t=>{ const k=t.date.slice(0,7); byMonth[k]=byMonth[k]||{income:0,expense:0}; byMonth[k].income+=Number(t.amount); });
+  state.expenses.forEach(e=>{ const k=e.date.slice(0,7); byMonth[k]=byMonth[k]||{income:0,expense:0}; byMonth[k].expense+=Number(e.amount); });
+  const months = Object.keys(byMonth).sort();
+  const rows = `<table><thead><tr><th>Month</th><th>Income</th><th>Expenses</th><th>Net</th></tr></thead><tbody>
+    ${months.map(mo=>{const d=byMonth[mo]; const net=d.income-d.expense; return `<tr><td>${mo}</td><td>${fmtMoney(d.income)}</td><td>${fmtMoney(d.expense)}</td><td style="color:${net>=0?'var(--green)':'var(--red)'};font-weight:700;">${fmtMoney(net)}</td></tr>`}).join('') || '<tr><td colspan="4">No data yet</td></tr>'}
+  </tbody></table>`;
+  const csv = [['Month','Income','Expenses','Net'], ...months.map(mo=>{const d=byMonth[mo]; return [mo,d.income,d.expense,d.income-d.expense];})];
+  reportWrap('Profit & Loss Summary', rows, csv, 'profit-loss-summary.csv');
+}
+function expiryReport(){
+  const list = state.members.filter(m=>m.validityEnd).sort((a,b)=>a.validityEnd.localeCompare(b.validityEnd));
+  const rows = `<table><thead><tr><th>Member</th><th>Mobile</th><th>Valid Till</th><th>Status</th></tr></thead><tbody>
+    ${list.map(m=>`<tr><td>${escapeHtml(m.name)}</td><td>${escapeHtml(m.mobile)}</td><td>${fmtDate(m.validityEnd)}</td><td><span class="badge ${memberStatusInfo(m).cls}">${memberStatusInfo(m).label}</span></td></tr>`).join('')}
+  </tbody></table>`;
+  const csv = [['Member','Mobile','Valid Till','Status'], ...list.map(m=>[m.name,m.mobile,m.validityEnd,memberStatusInfo(m).label])];
+  reportWrap('Membership Expiry Report', rows, csv, 'membership-expiry-report.csv');
+}
+function collectionReport(){
+  const byDay = {};
+  state.feeTransactions.forEach(t=>{ byDay[t.date]=(byDay[t.date]||0)+Number(t.amount); });
+  const days = Object.keys(byDay).sort().reverse();
+  const rows = `<table><thead><tr><th>Date</th><th>Amount Collected</th></tr></thead><tbody>
+    ${days.map(d=>`<tr><td>${fmtDate(d)}</td><td>${fmtMoney(byDay[d])}</td></tr>`).join('') || '<tr><td colspan="2">No data yet</td></tr>'}
+  </tbody></table>`;
+  const csv = [['Date','Amount'], ...days.map(d=>[d,byDay[d]])];
+  reportWrap('Daily Collection Report', rows, csv, 'daily-collection-report.csv');
+}
+// retention: members active > 6 months from joining
+function retentionNote(){ /* included in reports intro if needed */ }
+
+/* =========================================================================
+   SETTINGS (Users, Business info, Backup, Audit log)
+   ========================================================================= */
+let settingsSubTab = 'business';
+function viewSettings(){
+  return `
+  <div class="view-header"><div><h2>Settings</h2><div class="subtitle">Business info, users, backup &amp; audit log</div></div></div>
+  <div class="tabs-row">
+    <button class="tab-btn ${settingsSubTab==='business'?'active':''}" onclick="settingsSubTab='business'; renderView();">Business</button>
+    <button class="tab-btn ${settingsSubTab==='users'?'active':''}" onclick="settingsSubTab='users'; renderView();">Users &amp; Roles</button>
+    <button class="tab-btn ${settingsSubTab==='backup'?'active':''}" onclick="settingsSubTab='backup'; renderView();">Backup &amp; Export</button>
+    <button class="tab-btn ${settingsSubTab==='audit'?'active':''}" onclick="settingsSubTab='audit'; renderView();">Audit Log</button>
+  </div>
+  ${settingsSubTab==='business'?settingsBusinessTab():settingsSubTab==='users'?settingsUsersTab():settingsSubTab==='backup'?settingsBackupTab():settingsAuditTab()}
+  `;
+}
+function settingsBusinessTab(){
+  const b = state.business;
+  return `<div class="panel"><div class="panel-body">
+    <div class="form-grid">
+      <div class="field full"><label>Business / Library Name</label><input id="biz_name" value="${escapeHtml(b.name)}"></div>
+      <div class="field"><label>Phone</label><input id="biz_phone" value="${escapeHtml(b.phone||'')}"></div>
+      <div class="field"><label>Address</label><input id="biz_address" value="${escapeHtml(b.address||'')}"></div>
+      <div class="field full"><label>Tagline</label><input id="biz_tagline" value="${escapeHtml(b.tagline||'')}"></div>
+    </div>
+    <button class="btn btn-primary" style="margin-top:14px;" onclick="saveBusiness()">Save Business Info</button>
+  </div></div>`;
+}
+function saveBusiness(){
+  state.business.name = document.getElementById('biz_name').value.trim() || state.business.name;
+  state.business.phone = document.getElementById('biz_phone').value.trim();
+  state.business.address = document.getElementById('biz_address').value.trim();
+  state.business.tagline = document.getElementById('biz_tagline').value.trim();
+  logAction('Business info updated','');
+  save();
+  document.getElementById('sideBrandName').textContent = state.business.name;
+  document.getElementById('loginBrandName').textContent = state.business.name;
+  toast('Saved','success');
+}
+function settingsUsersTab(){
+  return `<div class="panel"><div class="panel-head"><h3>Users</h3><button class="btn btn-sm btn-gold" onclick="openUserModal()">${ICONS.plus} New User</button></div>
+    <div class="panel-body table-wrap"><table><thead><tr><th>Name</th><th>Username</th><th>Role</th><th></th></tr></thead><tbody>
+    ${state.auth.users.map(u=>`<tr><td>${escapeHtml(u.name)}</td><td class="mono">${escapeHtml(u.username)}</td><td><span class="badge ${u.role==='Admin'?'badge-gold':'badge-blue'}">${u.role}</span></td>
+      <td class="actions-cell"><button class="icon-btn" onclick="openUserModal('${u.id}')">${ICONS.edit}</button>${state.auth.users.length>1?`<button class="icon-btn" onclick="deleteUser('${u.id}')">${ICONS.trash}</button>`:''}</td></tr>`).join('')}
+    </tbody></table></div></div>
+    <p class="cell-sub" style="font-size:12px;">Note: <b>Admin/Owner</b> has full access. <b>Staff</b> can manage members, seats, fee collection and attendance, but cannot delete records, manage expenses, view reports, or change settings.</p>`;
+}
+function openUserModal(id){
+  const u = id? state.auth.users.find(x=>x.id===id) : null;
+  openModal(u?'Edit User':'New User', `
+    <div class="form-grid">
+      <div class="field full"><label>Full Name *</label><input id="us_name" value="${u?escapeHtml(u.name):''}"></div>
+      <div class="field"><label>Username *</label><input id="us_username" value="${u?escapeHtml(u.username):''}"></div>
+      <div class="field"><label>Role</label><select id="us_role"><option value="Admin" ${u&&u.role==='Admin'?'selected':''}>Admin / Owner (full access)</option><option value="Staff" ${u&&u.role==='Staff'?'selected':''}>Staff (limited access)</option></select></div>
+      <div class="field full"><label>${u?'New Password (leave blank to keep current)':'Password *'}</label><input type="password" id="us_password"></div>
+    </div>
+  `, `<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveUser(${u?`'${u.id}'`:'null'})">Save</button>`);
+}
+function saveUser(id){
+  const name = document.getElementById('us_name').value.trim();
+  const username = document.getElementById('us_username').value.trim();
+  const pw = document.getElementById('us_password').value;
+  if(!name || !username){ toast('Name and username required','error'); return; }
+  if(!id && !pw){ toast('Password required for new user','error'); return; }
+  const dupe = state.auth.users.find(u=>u.username===username && u.id!==id);
+  if(dupe){ toast('Username already exists','error'); return; }
+  let u = id? state.auth.users.find(x=>x.id===id) : null;
+  const isNew = !u;
+  if(isNew){ u = {id:uid()}; state.auth.users.push(u); }
+  u.name=name; u.username=username; u.role=document.getElementById('us_role').value;
+  if(pw) u.password = pw;
+  logAction(isNew?'User created':'User updated', username);
+  closeModal(); save(); renderView(); toast('User saved','success');
+}
+function deleteUser(id){
+  if(!confirm('Delete this user?')) return;
+  state.auth.users = state.auth.users.filter(u=>u.id!==id);
+  save(); renderView(); toast('User deleted');
+}
+function settingsBackupTab(){
+  return `<div class="panel"><div class="panel-body">
+    <h4 style="margin-bottom:6px;">Where your data lives</h4>
+    <p class="cell-sub" style="margin-bottom:10px;">Everything is stored as <b class="mono">CSV files</b> in the <b class="mono">data/</b> folder next to <b class="mono">server.py</b> on this computer — nothing is sent anywhere else. One CSV file per data type (members, seats, fees, expenses, attendance, etc.) so you can open them in Excel at any time.</p>
+    <h4 style="margin-bottom:6px;margin-top:16px;">Export full backup</h4>
+    <p class="cell-sub" style="margin-bottom:10px;">Download all data (members, seats, fees, expenses, users) as a ZIP file containing all CSVs you can store elsewhere (USB drive, cloud folder, etc.). Note: The restore feature below currently requires the older JSON format.</p>
+    <button class="btn btn-primary" onclick="downloadBackup()">${ICONS.download} Download Backup (CSV ZIP)</button>
+    <hr style="margin:20px 0; border:none; border-top:1px solid var(--border);">
+    <h4 style="margin-bottom:6px;">Restore from backup</h4>
+    <p class="cell-sub" style="margin-bottom:10px;">This will replace all current data.</p>
+    <input type="file" id="restoreFile" accept="application/json">
+    <button class="btn btn-danger" style="margin-left:8px;" onclick="restoreBackup()">Restore</button>
+    <hr style="margin:20px 0; border:none; border-top:1px solid var(--border);">
+    <h4 style="margin-bottom:6px;">Export data tables</h4>
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      <button class="btn btn-sm btn-ghost" onclick="exportMembersCSV()">Members CSV</button>
+      <button class="btn btn-sm btn-ghost" onclick="exportFeesCSV()">Fees CSV</button>
+      <button class="btn btn-sm btn-ghost" onclick="exportExpensesCSV()">Expenses CSV</button>
+    </div>
+    <hr style="margin:20px 0; border:none; border-top:1px solid var(--border);">
+    <div style="background:var(--red-soft); border:1.5px solid #f3c4c4; border-radius:10px; padding:18px 20px;">
+      <h4 style="color:var(--red); margin-bottom:6px;">⚠ Danger Zone</h4>
+      <p class="cell-sub" style="margin-bottom:14px;">This will <b>permanently delete all data</b> — members, seats, fees, expenses, attendance, audit log, custom plans — and reset the admin password back to <b class="mono">admin / admin123</b>. This cannot be undone.</p>
+      <button class="btn btn-danger" id="resetAllDataBtn" onclick="resetAllData()" style="background:var(--red); color:#fff; font-weight:700;">
+        ${ICONS.trash} Reset All Data &amp; Restore Defaults
+      </button>
+    </div>
+  </div></div>`;
+}
+async function resetAllData(){
+  if(!guardPerm('deleteMember','Only Admin can reset data')) return;
+  const confirmed = confirm('WARNING: This will permanently delete ALL data and reset the admin password to admin/admin123.\n\nThis cannot be undone. Are you absolutely sure?');
+  if(!confirmed) return;
+  const doubleCheck = confirm('Last chance — delete everything and reset?');
+  if(!doubleCheck) return;
+  try{
+    const r = await fetch('/api/reset', {method:'POST'});
+    if(!r.ok) throw new Error('reset failed');
+    // Reload fresh state from server
+    await loadState();
+    state = await fetch('/api/data').then(x=>x.json());
+    session.user = null;
+    document.getElementById('appShell').classList.remove('active');
+    document.getElementById('loginScreen').style.display='flex';
+    document.getElementById('loginForm').reset();
+    toast('All data reset. Please log in again.','success');
+  }catch(e){ toast('Reset failed — check server console','error'); }
+}
+function downloadBackup(){
+  window.location.href = '/api/backup/export';
+  logAction('Backup downloaded','ZIP of CSV files');
+  toast('Backup downloaded','success');
+}
+function restoreBackup(){
+  const file = document.getElementById('restoreFile').files[0];
+  if(!file){ toast('Choose a backup file first','error'); return; }
+  if(!confirm('This will replace ALL current data. Continue?')) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try{
+      const data = JSON.parse(e.target.result);
+      if(!data.members || !data.seats){ throw new Error('invalid'); }
+      state = data;
+      logAction('Backup restored','');
+      save(); renderNav(); renderView();
+      toast('Backup restored','success');
+    }catch(err){ toast('Invalid backup file','error'); }
+  };
+  reader.readAsText(file);
+}
+function settingsAuditTab(){
+  const log = state.auditLog.slice(0,150);
+  return `<div class="panel"><div class="panel-head"><h3>Audit log</h3><span class="cell-sub">Last ${log.length} actions</span></div>
+    <div class="panel-body table-wrap">
+    ${log.length? `<table><thead><tr><th>Time</th><th>User</th><th>Action</th><th>Details</th></tr></thead><tbody>
+      ${log.map(l=>`<tr><td class="mono cell-sub">${new Date(l.ts).toLocaleString('en-IN')}</td><td>${escapeHtml(l.user)}</td><td>${escapeHtml(l.action)}</td><td class="cell-sub">${escapeHtml(l.details)}</td></tr>`).join('')}
+    </tbody></table>` : `<div class="empty-state"><p>No activity recorded yet.</p></div>`}
+    </div></div>`;
+}
+
+/* =========================================================================
+   AUTH
+   ========================================================================= */
+document.getElementById('loginForm').addEventListener('submit', function(e){
+  e.preventDefault();
+  const username = document.getElementById('loginUser').value.trim();
+  const password = document.getElementById('loginPass').value;
+  const u = state.auth.users.find(x=>x.username===username && x.password===password);
+  const err = document.getElementById('loginError');
+  if(!u){ err.style.display='block'; return; }
+  err.style.display='none';
+  session.user = u;
+  logAction('Logged in','');
+  save();
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('appShell').classList.add('active');
+  document.getElementById('sideUserAv').textContent = initials(u.name);
+  document.getElementById('sideUserName').textContent = u.name;
+  document.getElementById('sideUserRole').textContent = u.role;
+  activeTab = 'dashboard';
+  renderNav(); renderView();
+  resetSessionTimer(); // start 1-hour inactivity countdown
+});
+document.getElementById('logoutBtn').addEventListener('click', function(){
+  logAction('Logged out','');
+  save();
+  clearTimeout(_sessionTimer);
+  clearTimeout(_sessionWarn);
+  _clearWarnBadge();
+  session.user = null;
+  document.getElementById('appShell').classList.remove('active');
+  document.getElementById('loginScreen').style.display='flex';
+  document.getElementById('loginForm').reset();
+});
+document.getElementById('globalSearch').addEventListener('input', function(){
+  memberFilter.q = this.value;
+  if(activeTab!=='members'){ setTab('members'); }
+  else renderView();
+});
+
+/* =========================================================================
+   INIT
+   ========================================================================= */
+(async function init(){
+  await loadState();
+  document.getElementById('loginBrandName').textContent = state.business.name;
+  document.getElementById('sideBrandName').textContent = state.business.name;
+  _bindActivityEvents(); // listen for user activity to reset session timer
+})();
+</script>
+</body>
+</html>
